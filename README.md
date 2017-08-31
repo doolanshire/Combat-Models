@@ -1,7 +1,5 @@
-<snippet>
-  <content><![CDATA[
-# ${1:Combat Models}
-A growing collection of Python implementations of mathematical combat models used in operational research. Meant to accompany the explanations published in the blog 'Damn the Torpedoes!' at http://wwww.doolanshire.net
+# Combat Models
+A growing collection of Python implementations of mathematical combat models used in operational research. Meant to accompany the explanations published in the blog _'Damn the Torpedoes!'_ at http://wwww.doolanshire.net
 ## Installation
 Unless stated otherwise, the models are just single-file, mostly self-contained Python scripts. Here is a list of dependencies so far:
 - NumPy (Lanchester Linear, Lanchester Square)
@@ -14,6 +12,3 @@ The scripts here collected are merely for research, with no form or function goa
 All combat models in this repository were made by me to help my research.
 ## License
 All combat models in this repository are distributed under MIT License.
-]]></content>
-  <tabTrigger>readme</tabTrigger>
-</snippet>
