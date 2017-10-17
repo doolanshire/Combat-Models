@@ -22,7 +22,7 @@ from math import ceil
 # Use only to determine the resolution of the graph.
 
 timeStart = 0.0
-timeEnd = 20.0
+timeEnd = 90.0
 timeStep = 0.01
 
 steps = int((timeEnd - timeStart) / timeStep)
@@ -37,10 +37,10 @@ red = numpy.zeros(steps)
 redShips = numpy.zeros(steps)
 time = numpy.zeros(steps)
 
-blue[0] = 3.87254635426
-blueShips[0] = 4
-red[0] = 1
-redShips[0] = 1
+blue[0] = 8
+blueShips[0] = 8
+red[0] = 7
+redShips[0] = 7
 
 blueLethality = 0.2
 redLethality = 0.2
