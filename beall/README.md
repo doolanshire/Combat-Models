@@ -7,6 +7,7 @@ In Beall's combat model, each opposing side is composed of a number of "groups",
 representing those naval units which fired or manoeuvred together in an engagement.
 
 Each group has the following aggregate characteristics:
+
 * **Staying power**: a function of the group's total displacement in tons. Defines how
 much damage the group can withstand.
 * **Continuous firepower**: a function of the weight of explosive ordnance the group
