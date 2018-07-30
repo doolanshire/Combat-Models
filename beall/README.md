@@ -43,7 +43,8 @@ simulation.
 
                      CORONEL 1914                      
 
-```BRITISH
+```
+BRITISH
 Good Hope, Monmouth      SP: 3.21  | CF: 7.27  | PF: 0.0  
 Glasgow                  SP: 1.23  | CF: 0.42  | PF: 0.0  
 
