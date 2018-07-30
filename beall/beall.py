@@ -1,33 +1,54 @@
+# Thomas Reagan Beall's Naval Combat Model (1990)
+# ===============================================
+# NOTE: all firepower values are defined in TPBE
+# (Thousand-Pound Bomb Equivalent) by the weight
+# of explosive ordnance fired. See:
+# BEALL, Thomas R – The Development of a Naval
+# Battle Model and its Validation Using Historical
+# Data – Naval Postgraduate School (1990).
+# ===============================================
+
 class Group:
+    """ A group of ships.
+    Parameters:
+    - name (string) - the name of the group, for output labelling purposes.
+    - continuousFire (float) - the continuous fire value of the group, in TPBE
+    - staying (float) – the staying power of the group.
+    Additional attribute:
+    - pulse (list) - a list of pulse weapons (torpedoes, bombs) added by the
+    "add_pulse_weapon()" method.
+    """
+    
     def __init__(self, name, continuousFire, staying):
         self.name = name
         self.continuousFire = continuousFire
         self.originalStaying = self.previousStaying = self.staying = staying
-        self.pulse = []
+        self.pulse = [] # An empty list, to store pulse weapons later.
         
     def add_pulse_weapon(self, power, number):
-        ''' Adds a pulse weapon platform to the group.
+        """ Adds a pulse weapon platform to the group.
         
         power (float) = the theoretical destructive power (TPBE) of a SINGLE weapon (torpedo,
         bomb, etc) in the platform.
-        number (int) = the number of weapons the group can fire in a single salvo. '''
+        number (int) = the number of weapons the group can fire in a single salvo.
+        """
         
         pp = (power, number)
         self.pulse.append(pp)
         
     def get_status(self):
-        ''' Returns the status of the group in the current minute.'''
+        """ Returns the status of the group in the current minute."""
         return self.staying / self.originalStaying
         
     def previous_status(self):
-        ''' Returns the status of the group in the previous minute.'''
+        """ Returns the status of the group in the previous minute."""
         return self.previousStaying / self.originalStaying
         
     def continuous_fire(self):
         return self.continuousFire * self.previous_status()
         
     def pulse_fire(self, type = 'all', salvoSize = 'all'):
-        ''' Returns the pulse fire value of the group.
+        """ Returns the pulse fire value of the group.
         
         If nothing is specified, it returns the total theoretical pulse fire of the group
         (full salvos from all platforms)
@@ -38,7 +59,8 @@ class Group:
         Before being returned, the value is modified by the group's status.
         
         The function cannot return a value higher than the theoretical maximum (a group
-        with 24 torpedo tubes cannot fire 25 torpedoes)'''
+        with 24 torpedo tubes cannot fire 25 torpedoes)
+        """
         
         if type == 'all':
             # Return the total theoretical pulse power of the group
@@ -56,11 +78,12 @@ class Group:
                 return salvo * self.previous_status()
                 
     def damage(self, ratio):
-        ''' Damages the group by a given fractional ratio (damage by 0.5 would damage
+        """ Damages the group by a given fractional ratio (damage by 0.5 would damage
         the group by 50%)
         
         ratio (fraction) = the damage applied to the group from 0 to 1. All values equal
-        to 1 or higher, which would result in no damage or negative damage, are ignored.'''
+        to 1 or higher, which would result in no damage or negative damage, are ignored.
+        """
         
         if ratio < 0:
             self.staying *= 0
@@ -68,13 +91,14 @@ class Group:
             self.staying *= ratio
             
     def refresh(self):
-        ''' Refreshes the group by advancing time one minute. The current staying power
-        becomes the previous one.''' 
+        """ Refreshes the group by advancing time one minute. The current staying power
+        becomes the previous one.
+        """ 
         
         self.previousStaying = self.staying
         
     def __str__(self):
-        ''' String override'''
+        """ String override"""
         sp = round(self.staying, 3)
         cf = round(self.continuous_fire(), 3)
         pf = round(self.pulse_fire(), 3)
@@ -82,6 +106,12 @@ class Group:
         return groupString
         
 class Side:
+    """ One of two opposing sides, formed by one or more groups.
+    Parameters:
+    - name (string): the name of the side, for output labelling purposes.
+    - groups (list): a list of the Group objects included in the side.
+    """
+    
     def __init__(self, name, groups):
         self.name = name
         self.groups = groups
@@ -93,13 +123,14 @@ class Side:
         self.latestEvent = 0
         
     def staying_power(self, groupSelection = 'all'):
-        ''' Returns the staying power of the side, in the current minute.
+        """ Returns the staying power of the side, in the current minute.
         
         If nothing is specified, the aggregated staying power of all groups is returned.
         
         If groupSelection is an int, return staying power for the group at index [groupSelection]
         
-        If groupSelection is a tuple, return aggregated staying power for the selected groups.'''
+        If groupSelection is a tuple, return aggregated staying power for the selected groups.
+        """
         
         if groupSelection == 'all':
         # Return the total staying power of all groups in the side
@@ -114,9 +145,11 @@ class Side:
             return sum(self.groups[group].staying for group in groupSelection)
             
     def get_status(self):
+        """ Returns the status (fraction) of the side."""
         return self.staying_power() / self.originalStaying 
         
     def continuous_fire_loss(self):
+        """ Returns the percentage of continuous firepower lost by the group."""
         if self.originalContinuous == 0:
             return 0
         else:
@@ -125,6 +158,7 @@ class Side:
             return loss
         
     def pulse_fire_loss(self):
+        """ Returns the percentage of pulse firepower lost by the group."""
         if self.originalPulse == 0:
             return 0
         else:
@@ -133,13 +167,14 @@ class Side:
             return loss
             
     def continuous_fire(self, groupSelection = 'all'):
-        ''' Returns the continuous fire value of the side.
+        """ Returns the continuous fire value of the side.
         
         If nothing is specified, the aggregated continuous fire of all groups is returned.
         
         If groupSelection is an int, return continuous fire for the group at index [groupSelection]
         
-        If groupSelection is a tuple, return the sum of continuous fire for the selected groups.'''
+        If groupSelection is a tuple, return the sum of continuous fire for the selected groups.
+        """
         
         if groupSelection == 'all':
         # Return the total continuous fire value of all groups in the side
@@ -154,7 +189,7 @@ class Side:
             return sum(self.groups[group].continuous_fire() for group in groupSelection)
             
     def pulse_fire(self, groupSelection = 'all', type = 'all', size = 'all'):
-        ''' Returns the pulse fire value of the side.
+        """ Returns the pulse fire value of the side.
         
         If nothing is specified, all groups and platforms are aggregated.
         
@@ -163,7 +198,8 @@ class Side:
         
         If groupSelection and size are tuples of the same length, return the aggregated
         value for the specified groups and their corresponding salvo sizes, matched by
-        index.'''
+        index.
+        """
         
         if groupSelection == type == size == 'all':
             # Return the total maximum pulse fire of all groups and weapon types
@@ -182,13 +218,14 @@ class Side:
             raise ValueError('Invalid input for pulse fire')
             
     def damage(self, ratio, groupSelection = 'all'):
-        ''' Damages the groups in the side.
+        """ Damages the groups in the side.
         
         If nothing is specified, all groups are damaged by the same ratio.
         
         If groupSelection is an int, the selected group is damaged by the given ratio.
         
-        If groupSelection is a tuple, the selected groups are damaged by the given ratio.'''
+        If groupSelection is a tuple, the selected groups are damaged by the given ratio.
+        """
         
         if groupSelection == 'all':
             for group in self.groups:
@@ -202,7 +239,7 @@ class Side:
                 self.groups[target].damage(ratio)
         
     def continuous_fire_event(self, firer, target, efficiency, start, duration):
-        ''' Add a continuous fire event to the side's event list.'''
+        """ Add a continuous fire event to the side's event list."""
         
         if start + duration > self.latestEvent:
             self.latestEvent = start + duration + 1
@@ -211,7 +248,7 @@ class Side:
         self.continuousEvents.append(event)
         
     def pulse_fire_event(self, firer, target, type, size, efficiency, start, tui):
-        ''' Add a pulse fire event to the side's event list.'''
+        """ Add a pulse fire event to the side's event list."""
         
         if start + tui > self.latestEvent:
             self.latestEvent = start + tui + 1
@@ -220,7 +257,7 @@ class Side:
         self.pulseEvents.append(event)
         
     def __str__(self):
-        ''' String override.'''
+        """ String override."""
         sp = round(self.staying_power(), 3)
         cf = round(self.continuous_fire(), 3)
         pf = round(self.pulse_fire(), 3)
@@ -228,6 +265,17 @@ class Side:
         return sideString
         
 class Battle:
+    """ A battle between two opposing sides.
+    Parameters:
+    - name (string): name of the battle, for output labelling purposes.
+    - sideA (Side object): the first of the opposing sides.
+    - sideB (Side object): the second opposing side.
+    Other attributes:
+    - Timelines for both sides continuous and pulse fire events (lists of tuples
+    specifying firer, target, time of fire, etc).
+    - Lists to hold the status of each side every minute, for plotting purposes.
+    - timePulse (int): the current minute of the battle. Starts at 0.
+    """
     def __init__(self, name, sideA, sideB):
         self.name = name
         self.sideA = sideA
@@ -276,6 +324,7 @@ class Battle:
                 self.sideBpulseEvents[event[5]].append(pf)
                 
     def advance_pulse(self):
+        """ Advance the battle by one time pulse (one minute)"""
         # Check whether any A continuous fire events are taking place this minute
         if len(self.sideAtimeline[self.timePulse]) > 0:
         # Apply damage to B accordingly for each event
@@ -357,6 +406,7 @@ class Battle:
         self.timePulse += 1
         
     def resolve(self):
+        """ Resolve the battle until its conclusion."""
         print("{:^55}".format(self.name.upper()))
         print("\n{}".format(self.sideA.name.upper()))
         for group in self.sideA.groups:
@@ -387,7 +437,7 @@ class Battle:
         print(lossesString)
         
     def __str__(self):
-        '''String override.'''
+        """String override."""
         sideAsp = round(self.sideA.staying_power(), 3)
         sideBsp = round(self.sideB.staying_power(), 3)
         sideAcf = round(self.sideA.continuous_fire(), 3)
@@ -398,8 +448,26 @@ class Battle:
         self.timePulse,sideAsp,sideAcf,sideApf,sideBsp,sideBcf,sideBpf)
         return battleString
 
+# CORONEL 1914 (comment out the block below if you wish to play a different battle)
+britishOne = Group("Good Hope, Monmouth", 7.27, 3.21)
+britishTwo = Group("Glasgow", 0.42, 1.23)
 
-# MIDWAY 1942
+germanOne = Group("Scharnhorst, Gneisenau", 4.32, 3.30)
+germanTwo = Group("Leipzig, Dresden", 4.33, 2.23)
+
+british = Side("British", [britishOne, britishTwo])
+german = Side("German", [germanOne, germanTwo])
+
+german.continuous_fire_event(0,0,0.028,1,28)
+british.continuous_fire_event(1,0,0.028,6,15)
+german.continuous_fire_event(1,1,0.012, 19, 2)
+
+battle = Battle("Coronel 1914", british, german)
+
+battle.resolve()
+
+
+# MIDWAY 1942 (uncomment the commented block below and run the file to play the battle)
 
 # usOne = Group("Yorktown", 0, 2.07)
 # usTwo = Group("Enterprise, Hornet", 0, 4.14)
@@ -437,7 +505,7 @@ class Battle:
 # battle.resolve()
 
 
-# CORAL SEA REVISED
+# CORAL SEA REVISED (uncomment the commented block below and run the file to play the battle)
 
 # usOne = Group("Lexington", 0, 2.42)
 # usTwo = Group("Yorktown", 0, 2.07)
@@ -471,23 +539,3 @@ class Battle:
 # 
 # battle.resolve()
 
-
-
-# CORONEL 1914
-# britishOne = Group("Good Hope, Monmouth", 7.27, 3.21)
-# britishTwo = Group("Glasgow", 0.42, 1.23)
-# 
-# germanOne = Group("Scharnhorst, Gneisenau", 4.32, 3.30)
-# germanTwo = Group("Leipzig, Dresden", 4.33, 2.23)
-# 
-# british = Side("British", [britishOne, britishTwo])
-# german = Side("German", [germanOne, germanTwo])
-# 
-# german.continuous_fire_event(0,0,0.028,1,28)
-# british.continuous_fire_event(1,0,0.028,6,15)
-# german.continuous_fire_event(1,1,0.012, 19, 2)
-# 
-# battle = Battle("Coronel 1914", british, german)
-# 
-# battle.resolve()
-#         
