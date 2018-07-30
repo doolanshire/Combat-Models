@@ -88,8 +88,3 @@ SUMMARY OF LOSSES (% LOST)
 SA    | FCA   | FPA   | SB    | FCB   | FPB  
 74.64 | 74.64 | 0.00  | 3.18  | 3.18  | 0.00 
 ```
-
-
-###Dependencies
-
-None. The Python standard library is all that is required.
