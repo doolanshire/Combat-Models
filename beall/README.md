@@ -37,9 +37,6 @@ At some point, and when I'm done with other projects, I might modify the program
 battle data from external CSV files, in order to simplify playing around with the
 simulation.
 
-###Dependencies
-None. The Python standard library is all that is required.
-
 ## Example output
                      CORONEL 1914                      
 
@@ -88,5 +85,6 @@ SUMMARY OF LOSSES (% LOST)
 SA    | FCA   | FPA   | SB    | FCB   | FPB  
 74.64 | 74.64 | 0.00  | 3.18  | 3.18  | 0.00 
 ```
-### Dependencies
+
+###Dependencies
 None. The Python standard library is all that is required.
