@@ -1,8 +1,11 @@
-#Beall's Naval Combat Model
+# Beall's Naval Combat Model
+
 A Python implementation of the combat model created by Thomas Reagan Beall in 1983. This
 is a Python 3.6 (and OOP-structured) version of Beall's original program, written in
 Fortran77.
-##Description
+
+## Description
+
 In Beall's combat model, each opposing side is composed of a number of "groups",
 representing those naval units which fired or manoeuvred together in an engagement.
 
@@ -29,11 +32,12 @@ At the end of the file, after the class and function definitions, there are some
 of battles with input values directly taken from Beall's thesis. Simply uncomment the
 corresponding lines to run them.
 
-##To do
+## To do
 At some point, and when I'm done with other projects, I might modify the program to load
 battle data from external CSV files, in order to simplify playing around with the
 simulation.
 
+<<<<<<< HEAD
 ###Dependencies
 None. The Python standard library is all that is required.
 
@@ -84,3 +88,7 @@ TP  - SPA    | CFA    | PFA    | SPB    | CFB    | PFB
 SUMMARY OF LOSSES (% LOST)
 SA    | FCA   | FPA   | SB    | FCB   | FPB  
 74.64 | 74.64 | 0.00  | 3.18  | 3.18  | 0.00 
+=======
+### Dependencies
+None. The Python standard library is all that is required.
+>>>>>>> 96b452a89679de7c2823fc3c20f9cb0e2801e10c
