@@ -1,8 +1,10 @@
 # Beall's Naval Combat Model
 
-A Python implementation of the combat model created by Thomas Reagan Beall in 1983. This
+A Python implementation of the combat model created by Thomas Reagan Beall in 1990. This
 is a Python 3.6 (and OOP-structured) version of Beall's original program, written in
 Fortran77.
+
+Refer to Beall's original thesis [here](https://calhoun.nps.edu/handle/10945/34842).
 
 ## Description
 
