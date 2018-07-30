@@ -38,6 +38,7 @@ battle data from external CSV files, in order to simplify playing around with th
 simulation.
 
 ## Example output
+
                      CORONEL 1914                      
 
 ```BRITISH
@@ -85,6 +86,7 @@ SUMMARY OF LOSSES (% LOST)
 SA    | FCA   | FPA   | SB    | FCB   | FPB  
 74.64 | 74.64 | 0.00  | 3.18  | 3.18  | 0.00 
 ```
+
 
 ###Dependencies
 
