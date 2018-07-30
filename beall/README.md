@@ -1,6 +1,6 @@
 # Beall's Naval Combat Model
 
-A Python implementation of the combat model created by Thomas Reagan Beall in 1990. This is a Python 3.6 (and OOP-structured) version of Beall's original program, written in Fortran77, which I have also included in a separate file for completeness.
+A Python implementation of the combat model created by Thomas Reagan Beall in 1990. This is a Python 3.6 (and OOP-structured) version of Beall's original program, written in Fortran77, which I have also included [in a separate file](https://github.com/doolanshire/Combat-Models/blob/master/beall/battle.f) for completeness.
 
 Refer to Beall's original thesis [here](https://calhoun.nps.edu/handle/10945/34842).
 
@@ -16,7 +16,7 @@ much damage the group can withstand.
 * **Continuous firepower**: a function of the weight of explosive ordnance the group
 is able to fire continuously – that is, from its guns.
 * **Pulse weapons**: weapons which deliver a certain amount of explosive power in
-a discrete fashion, such as a torpedo or an aircraft bomb.
+a discrete fashion, such as a torpedo or an aerial bomb.
 
 The battle is structured in a series of "fire events", in which groups fire their weapons
 at other groups. In the case of continuous fire, the starting time and duration of the
@@ -32,7 +32,13 @@ At the end of the file, after the class and function definitions, there are some
 of battles with input values directly taken from Beall's thesis. Simply uncomment the
 corresponding lines to run them.
 
+## Files
+
+* **beall.py**: Python file containing the simulation (class and method definitions) and some example battles at the end.
+* **battle.f**: Mr. Beall's original Fortran 77 program, as transcribed from his thesis. I was able to compile it successfully using [GFortran](https://www.gnu.org/software/gcc/fortran/) on Linux Mint, but your mileage may vary.
+
 ## To do
+
 At some point, and when I'm done with other projects, I might modify the program to load
 battle data from external CSV files, in order to simplify playing around with the
 simulation.
