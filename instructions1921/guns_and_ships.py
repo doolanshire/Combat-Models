@@ -53,7 +53,7 @@ def build_gun_dictionary(filename):
 
     gundict = {}
     with open(filename) as sourcefile:
-        reader = csv.reader(sourcefile, delimiter="\t")
+        reader = csv.reader(sourcefile, delimiter=",")
         next(reader)
         for row in reader:
             gundata = list(row)
@@ -62,6 +62,7 @@ def build_gun_dictionary(filename):
 
 # Build the gun dictionary for capital ships
 capitalguns = build_gun_dictionary("capital_weapons.csv")
+print(capitalguns)
 
 # Build the gun dictionary for cruisers
 
