@@ -61,9 +61,9 @@ def build_gun_dictionary(filename):
     return gundict
 
 # Build the gun dictionary for capital ships
-capitalguns = build_gun_dictionary("capital_weapons.csv")
-print(capitalguns)
+capitalguns = build_gun_dictionary("capital_ship_guns.csv")
 
 # Build the gun dictionary for cruisers
+cruiserguns = build_gun_dictionary("light_cruiser_guns.csv")
 
 # Build the gun dictionary for destroyers
