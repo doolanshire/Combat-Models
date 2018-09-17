@@ -67,3 +67,4 @@ capitalguns = build_gun_dictionary("capital_ship_guns.csv")
 cruiserguns = build_gun_dictionary("light_cruiser_guns.csv")
 
 # Build the gun dictionary for destroyers
+destroyerguns = build_gun_dictionary("destroyer_guns.csv")
