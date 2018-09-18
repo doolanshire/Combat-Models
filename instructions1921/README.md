@@ -25,7 +25,10 @@ Engagement information will be saved in external CSV files so that different bat
 
 **light\_cruiser\_guns.csv**: containing information on light cruiser guns (7.5 in VI, and 6 in XII).
 
+**destroyer\_guns.csv**: containing information on light cruiser guns (4.7 in I and 4 in V).
+
 ## To do
-* Implement functions to read and parse the rest of the gun data, as well as the ship data.
+* Implement a "ship" class as an armoured container of gun objects.
+* Implement functions to read and parse ship data.
 * Add battle logic.
 * Design and implement engagement input files.
