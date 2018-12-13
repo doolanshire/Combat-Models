@@ -13,6 +13,7 @@ class Gun:
         - effectivetohit: chance to hit per gun per minute at effective range.
         - effectivemin: minimum range in yards considered to be effective.
         - shorttohit: chance to hit per gun per minute at short range.
+        - active: whether the gun is active (True) or Out Of Action (False). All guns are initialised as active.
     """
 
     def __init__(self, caliber, maxrange, longtohit, longmin, effectivetohit, effectivemin, shorttohit):
@@ -23,6 +24,7 @@ class Gun:
         self.effectivetohit = effectivetohit
         self.effectivemin = effectivemin
         self.shorttohit = shorttohit
+        self.active = True
 
     def return_to_hit(self, targetrange):
         """Return the chance to hit (per gun and minute) for a given range. If the target is out of range, return 0."""
@@ -36,6 +38,31 @@ class Gun:
             return self.shorttohit
         else:
             raise ValueError("Range must be a positive integer")
+
+    def is_active(self):
+        """Return True if the gun is active, False if it is Out Of Action."""
+        return self.active
+
+    def knock_out(self):
+        """Knock the gun out (make it inactive). Caused by enemy fire."""
+        self.active = False
+
+class Ship:
+    """
+    A ship, treated as an armoured weapons platform.
+
+    Attributes:
+        - name: the name of the ship.
+        - date: the date of completion.
+        - speed: the full speed of the ship in knots.
+        - capital: the ship's capital guns. A list of Gun objects. Starts as empty upon object initialisation,
+        and is later populated by the add_capital_guns() method.
+        - cruiser: the ship's cruiser guns. A list of Gun objects. Starts as empty upon object initialisation,
+        and is later populated by the add_cruiser_guns() method.
+        - destroyer: the ship's destroyer guns. A list of Gun objects. Starts as empty upon object initialisation,
+        and is later populated by the add_destroyer_guns() method.
+        -
+    """
 
 
 def build_gun_dictionary(filename):
@@ -68,3 +95,9 @@ cruiserguns = build_gun_dictionary("light_cruiser_guns.csv")
 
 # Build the gun dictionary for destroyers
 destroyerguns = build_gun_dictionary("destroyer_guns.csv")
+
+# TEST FOR GUN CREATION AND ONE METHOD #
+# Create the gun from the dictionary by its designation
+newgun = Gun(*capitalguns["13.5 in V"])
+# Print the chance to hit at the range specified
+print(newgun.return_to_hit(15000))
