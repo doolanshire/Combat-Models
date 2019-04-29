@@ -34,7 +34,7 @@ The program prints out:
 * The targets it fails to place (those landing in illegal positions)
 * The percentage of the arena's area covered by successfully-placed targets. A higher percentage means a more densely populated arena.
 * The number of targets killed by fragments.
-* The number of fragments that have been wasted by hitting targets which had already been hit by previous fragments. Used as a measurement of the effect of crowd blocking.
+* The number of fragments that have resulted in _overkill_ – by hitting targets which had already been hit by previous fragments. Used as a measurement of the effect of crowd blocking.
 
 ## To do
 
