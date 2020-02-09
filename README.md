@@ -1,5 +1,5 @@
 # Combat Models
-A growing collection of Python implementations of mathematical combat models used in operational research. Meant to accompany the explanations published in the blog _'Damn the Torpedoes!'_ at http://wwww.doolanshire.net
+A growing collection of Python implementations of mathematical combat models used in operational research. Meant to accompany the explanations published in the blog _'Damn the Torpedoes!'_ at http://www.doolanshire.net
 ## Installation
 Unless stated otherwise in the corresponding README file, the models are just single-file, mostly self-contained Python scripts which can just be run directly. Bear in mind that scripts producing a plot will most likely require Numpy and MatPlotLib to be installed.
 ## Usage
