@@ -1,0 +1,2 @@
+# Hughes' Salvo Combat Model (Stochastic)
+A Python implementation (with plotting functionality) of the stochastic version of Wayne P. Hughes' *Salvo Combat Model*, as developed by Michael J. Armstrong in 2005.
