@@ -67,3 +67,5 @@ plot.annotate(redRemaining,
               xy=(timeEnd, red[len(red)-1]),
               xytext=(-15,10),
               textcoords='offset points')
+              
+plot.show()
