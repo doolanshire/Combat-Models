@@ -7,35 +7,35 @@ class Gun:
 
     Attributes:
         - caliber: the caliber of the gun in inches.
-        - maxrange: maximum range in yards.
-        - longtohit: chance to hit per gun per minute at long range.
-        - longmin: minimum range in yards considered to be long range.
-        - effectivetohit: chance to hit per gun per minute at effective range.
-        - effectivemin: minimum range in yards considered to be effective.
-        - shorttohit: chance to hit per gun per minute at short range.
+        - max_range: maximum range in yards.
+        - long_to_hit: chance to hit per gun per minute at long range.
+        - long_min: minimum range in yards considered to be long range.
+        - effective_to_hit: chance to hit per gun per minute at effective range.
+        - effective_min: minimum range in yards considered to be effective.
+        - short_to_hit: chance to hit per gun per minute at short range.
         - active: whether the gun is active (True) or Out Of Action (False). All guns are initialised as active.
     """
 
-    def __init__(self, caliber, maxrange, longtohit, longmin, effectivetohit, effectivemin, shorttohit):
+    def __init__(self, caliber, max_range, long_to_hit, long_min, effective_to_hit, effective_min, short_to_hit):
         self.caliber = caliber
-        self.maxrange = maxrange
-        self.longtohit = longtohit
-        self.longmin = longmin
-        self.effectivetohit = effectivetohit
-        self.effectivemin = effectivemin
-        self.shorttohit = shorttohit
+        self.max_range = max_range
+        self.long_to_hit = long_to_hit
+        self.long_min = long_min
+        self.effective_to_hit = effective_to_hit
+        self.effective_min = effective_min
+        self.short_to_hit = short_to_hit
         self.active = True
 
-    def return_to_hit(self, targetrange):
+    def return_to_hit(self, target_range):
         """Return the chance to hit (per gun and minute) for a given range. If the target is out of range, return 0."""
-        if targetrange > self.maxrange:
+        if target_range > self.max_range:
             return 0
-        elif targetrange > self.longmin:
-            return self.longtohit
-        elif targetrange > self.effectivemin:
-            return self.effectivetohit
-        elif targetrange >= 0:
-            return self.shorttohit
+        elif target_range > self.long_min:
+            return self.long_to_hit
+        elif target_range > self.effective_min:
+            return self.effective_to_hit
+        elif target_range >= 0:
+            return self.short_to_hit
         else:
             raise ValueError("Range must be a positive integer")
 
@@ -78,26 +78,29 @@ def build_gun_dictionary(filename):
             * shorttohit (chance to hit per gun and minute at short range)
     """
 
-    gundict = {}
+    gun_dict = {}
     with open(filename) as sourcefile:
         reader = csv.reader(sourcefile, delimiter=",")
         next(reader)
         for row in reader:
-            gundata = list(row)
-            gundict[gundata[0]] = list(map(float, gundata[1:]))
-    return gundict
+            gun_data = list(row)
+            gun_dict[gun_data[0]] = list(map(float, gun_data[1:]))
+    return gun_dict
 
 # Build the gun dictionary for capital ships
-capitalguns = build_gun_dictionary("capital_ship_guns.csv")
+capital_guns = build_gun_dictionary("capital_ship_guns.csv")
 
 # Build the gun dictionary for cruisers
-cruiserguns = build_gun_dictionary("light_cruiser_guns.csv")
+cruiser_guns = build_gun_dictionary("light_cruiser_guns.csv")
 
 # Build the gun dictionary for destroyers
-destroyerguns = build_gun_dictionary("destroyer_guns.csv")
+destroyer_guns = build_gun_dictionary("destroyer_guns.csv")
+
+# Build the gun dictionary for destroyers
+secondary_guns = build_gun_dictionary("secondary_guns.csv")
 
 # TEST FOR GUN CREATION AND ONE METHOD #
 # Create the gun from the dictionary by its designation
-newgun = Gun(*capitalguns["13.5 in V"])
+new_gun = Gun(*capital_guns["13.5 in V"])
 # Print the chance to hit at the range specified
-print(newgun.return_to_hit(15000))
+print(new_gun.return_to_hit(23000))
