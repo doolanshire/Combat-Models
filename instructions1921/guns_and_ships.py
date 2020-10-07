@@ -52,18 +52,63 @@ class Ship:
     A ship, treated as an armoured weapons platform.
 
     Attributes:
-        - name: the name of the ship.
-        - date: the date of completion.
-        - speed: the full speed of the ship in knots.
-        - capital: the ship's capital guns. A list of Gun objects. Starts as empty upon object initialisation,
-        and is later populated by the add_capital_guns() method.
-        - cruiser: the ship's cruiser guns. A list of Gun objects. Starts as empty upon object initialisation,
-        and is later populated by the add_cruiser_guns() method.
-        - destroyer: the ship's destroyer guns. A list of Gun objects. Starts as empty upon object initialisation,
-        and is later populated by the add_destroyer_guns() method.
-        -
+        Input from file:
+        - name: the name of the ship (string).
+        - hull_class: "battleship", "battle cruiser", "light cruiser", "flotilla leader" or "destroyer" (string).
+        - main_armament_type: the model of gun used in the ship's main battery (gun object).
+        - main_armament_count: the total number of guns of the main type carried by the ship (int).
+        - main_armament_broadside: the number of guns the ship can bring to bear in either broadside (int).
+        Calculated by the program:
+        - staying_power: the ship's staying power (int).
+            - For battleships and battle cruisers, measured in 15-inch hits.
+            - For light cruisers and smaller classes, measured in 6-inch hits.
+        - hit_points: begins equal to staying power. Used to keep track of damage (float).
+        - status: 1 means undamaged, 0 means out of action / firepower kill (float).
     """
 
+    def __init__(self, name, hull_class, main_armament_type, main_armament_count, main_armament_broadside):
+        self.name = name
+        self.hull_class = hull_class
+        self.main_armament_type = main_armament_type
+        self.main_armament_count = main_armament_count
+        self.main_armament_broadside = main_armament_broadside
+        self.staying_power = main_armament_count
+        # Calculate the staying power multiplier for battleships based on main gun calibre.
+        if self.hull_class == "battleship":
+            if self.main_armament_type.caliber <= 12:
+                self.staying_power *= 1
+            elif self.main_armament_type.caliber <= 14:
+                self.staying_power *= 2
+            elif self.main_armament_type.caliber <= 15:
+                self.staying_power *= 3
+            else:
+                self.staying_power *= 3.25
+        # Calculate the staying power multiplier for battle cruisers based on main gun calibre.
+        elif self.hull_class == "battle cruiser":
+            if self.main_armament_type.caliber <= 12:
+                self.staying_power *= 0.75
+            elif self.main_armament_type.caliber <= 13.5:
+                self.staying_power *= 1.75
+            elif self.main_armament_type.caliber <= 15:
+                self.staying_power *= 2.5
+            else:
+                self.staying_power *= 2.75
+        # Calculate the staying power multiplier for light cruisers based on main gun calibre.
+        elif self.hull_class == "light cruiser":
+            if self.main_armament_type.caliber <= 4:
+                self.staying_power *= 4
+            elif self.main_armament_type.caliber <= 6:
+                self.staying_power *= 8
+            else:
+                self.staying_power *= 9
+        # Calculate the staying power multiplier for light squadron ships based on main gun calibre.
+        elif self.hull_class in ("flotilla leader", "destroyer"):
+            self.staying_power *= 1
+            """Note that a value of 1 in the above line will not change staying power at all. The
+            line is left here for clarity and in case one needs to experiment with the value."""
+        # Raise an exception if attempting to create a ship without a valid hull class.
+        else:
+            raise ValueError("Wrong ship class definition")
 
 def build_gun_dictionary(filename):
     """Build a dictionary of gun parameters from an external CSV file:
@@ -99,8 +144,14 @@ destroyer_guns = build_gun_dictionary("destroyer_guns.csv")
 # Build the gun dictionary for destroyers
 secondary_guns = build_gun_dictionary("secondary_guns.csv")
 
-# TEST FOR GUN CREATION AND ONE METHOD #
+# CREATE A TEST GUN AND GET THE TO HIT VALUE AT AN ARBITRARY RANGE #
 # Create the gun from the dictionary by its designation
-new_gun = Gun(*capital_guns["13.5 in V"])
+emden_gun = Gun(*destroyer_guns["4 in V"])
 # Print the chance to hit at the range specified
-print(new_gun.return_to_hit(23000))
+print(emden_gun.return_to_hit(10000))
+
+# CREATE A TEST SHIP AND GET ITS THE STAYING POWER
+# Create the ship from manually input values
+emden = Ship("SMS Emden", "light cruiser", emden_gun, 10, 5)
+# Print the staying power for its class and armament type
+print(emden.staying_power)
