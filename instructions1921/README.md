@@ -19,6 +19,9 @@ Engagement information will be saved in external CSV files so that different bat
 
 **guns\_and\_ships.py**: class *Gun* partially implemented, containing the definition and associated methods for a given designation of naval gun. Data is loaded from external CSV files containing naval gun parameters, which can be expanded or modified freely.
 
+Class *Ship* partially implemented, containing the definition and associated methods for a given ship belonging to one of the classes defined in the 1921 war game. Staying power is calculated upon creation from the ship class and armament type. Ship parameters have to be manually input for now.
+
+
 #### Data files:
 
 **capital\_ship\_guns.csv**: containing information on capital ship guns (16 in, 15 in I, 13.5 in V, and 12 in XI).
