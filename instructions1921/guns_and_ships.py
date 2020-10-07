@@ -148,16 +148,20 @@ destroyer_guns = build_gun_dictionary("destroyer_guns.csv")
 # Build the gun dictionary for destroyers
 secondary_guns = build_gun_dictionary("secondary_guns.csv")
 
-# CREATE A TEST GUN AND GET THE TO HIT VALUE AT AN ARBITRARY RANGE #
-# Create the gun from the dictionary by its designation
-emden_gun = Gun(*destroyer_guns["4 in V"])
+# CREATE TEST GUNS AND GET THEIR TO HIT VALUE AT AN ARBITRARY RANGE
+# Create the guns from the dictionary by their designation
+four_inch_v = Gun(*destroyer_guns["4 in V"])
+six_inch_xii = Gun(*cruiser_guns["6 in XII"])
 # Print the chance to hit at the range specified
-print(emden_gun.return_to_hit(10000))
 
-# CREATE A TEST SHIP AND GET ITS THE STAYING POWER
-# Create the ship from manually input values
-emden = Ship("SMS Emden", "light cruiser", emden_gun, 10, 5)
-# Print the staying power for its class and armament type
+
+# CREATE TEST SHIPS AND GET THEIR THE STAYING POWER
+# Create the ships from manually input values
+emden = Ship("SMS Emden", "light cruiser", four_inch_v, 10, 5)
+sydney = Ship("HMAS Sydney", "light cruiser", six_inch_xii, 8, 5)
+# Print the staying power for their class and armament type
 print(emden.staying_power)
+print(sydney.staying_power)
 # Fire a test broadside at 10000 yards
 print(emden.main_armament_type.return_to_hit(10000) * emden.main_armament_broadside)
+print(sydney.main_armament_type.return_to_hit(10000) * sydney.main_armament_broadside)
