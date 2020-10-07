@@ -49,7 +49,7 @@ class Gun:
 
 class Ship:
     """
-    A ship, treated as an armoured weapons platform.
+    A ship object. Keeps track of its damage status and contains gun objects.
 
     Attributes:
         Input from file:
@@ -110,6 +110,10 @@ class Ship:
         else:
             raise ValueError("Wrong ship class definition")
 
+        # Set the ship's initial hit points and status
+        self.hit_points = self.staying_power
+        self.status = 1
+
 def build_gun_dictionary(filename):
     """Build a dictionary of gun parameters from an external CSV file:
         - Key: the gun designation (e.g. '13.5 in V' or '12 in XI')
@@ -155,3 +159,5 @@ print(emden_gun.return_to_hit(10000))
 emden = Ship("SMS Emden", "light cruiser", emden_gun, 10, 5)
 # Print the staying power for its class and armament type
 print(emden.staying_power)
+# Fire a test broadside at 10000 yards
+print(emden.main_armament_type.return_to_hit(10000) * emden.main_armament_broadside)
