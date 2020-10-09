@@ -17,7 +17,7 @@ class Gun:
     """
 
     def __init__(self, caliber, max_range, long_to_hit, long_min, effective_to_hit, effective_min, short_to_hit):
-        self.caliber = caliber
+        self.caliber = max(0, caliber)
         self.max_range = max_range
         self.long_to_hit = long_to_hit
         self.long_min = long_min
@@ -39,6 +39,32 @@ class Gun:
         else:
             raise ValueError("Range must be a positive integer")
 
+    def return_damage_equivalent(self):
+        """Return the conversion factor of a caliber to 6-inch hits (light guns) or 15-inch hits (heavy guns)"""
+        # Conversion factor to 6-inch hits for light gun calibers
+        if self.caliber <= 7.5:
+            # The conversion factors below are as stated in the original 1921 rules
+            if self.caliber == 4:
+                damage_equivalent = 1/3
+            elif self.caliber == 4.7:
+                damage_equivalent = 1/2
+            elif self.caliber == 6:
+                damage_equivalent = 1
+            elif self.caliber == 7.5:
+                damage_equivalent = 3
+            # All other light calibers are determined through interpolation
+            # We used polynomial regression (R squared value of 0.9966)
+            else:
+                damage_equivalent = 1 / ((0.1746 * (self.caliber ** 2)) - (2.7523 * self.caliber) + 11.168)
+        # Conversion factor to 15-inch hits for heavy gun calibers
+        elif self.caliber > 7.5:
+            # Here we just use an equation for all cases because damage for big guns scales linearly
+            damage_equivalent = 1 / ((self.caliber/3) + 6)
+        else:
+            raise ValueError("Caliber must be a positive real number")
+
+        return damage_equivalent
+
     def is_active(self):
         """Return True if the gun is active, False if it is Out Of Action."""
         return self.active
@@ -46,6 +72,7 @@ class Gun:
     def knock_out(self):
         """Knock the gun out (make it inactive). Caused by enemy fire."""
         self.active = False
+
 
 class Ship:
     """
@@ -114,17 +141,18 @@ class Ship:
         self.hit_points = self.staying_power
         self.status = 1
 
+
 def build_gun_dictionary(filename):
     """Build a dictionary of gun parameters from an external CSV file:
         - Key: the gun designation (e.g. '13.5 in V' or '12 in XI')
         - Value: a list of parameters, in the order:
             * caliber (in inches)
-            * maxrange (maximum range in yards)
-            * longtohit (chance to hit per gun and minute at long range)
-            * longmin (minimum range considered to be long)
-            * effectivetohit (chance to hit per gun and minute at effective range)
-            * effectivemin (minimum range considered to be effective)
-            * shorttohit (chance to hit per gun and minute at short range)
+            * max_ange (maximum range in yards)
+            * long_to_hit (chance to hit per gun and minute at long range)
+            * long_min (minimum range considered to be long)
+            * effective_to_hit (chance to hit per gun and minute at effective range)
+            * effective_min (minimum range considered to be effective)
+            * short_to_hit (chance to hit per gun and minute at short range)
     """
 
     gun_dict = {}
@@ -135,6 +163,7 @@ def build_gun_dictionary(filename):
             gun_data = list(row)
             gun_dict[gun_data[0]] = list(map(float, gun_data[1:]))
     return gun_dict
+
 
 # Build the gun dictionary for capital ships
 capital_guns = build_gun_dictionary("capital_ship_guns.csv")
