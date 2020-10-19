@@ -39,7 +39,7 @@ class Gun:
         else:
             raise ValueError("Range must be a positive integer")
 
-    def return_damage_equivalent(self):
+    def return_damage_conversion_factor(self):
         """Return the conversion factor of a caliber to 6-inch hits (light guns) or 15-inch hits (heavy guns)"""
         # Conversion factor to 6-inch hits for light gun calibers
         if self.caliber <= 7.5:
@@ -64,6 +64,12 @@ class Gun:
             raise ValueError("Caliber must be a positive real number")
 
         return damage_equivalent
+
+    def return_equivalent_damage(self, range):
+        """Return the damage dealt by the gun over one minute at a given range, adjusted to 15-inch (capital guns)
+        or 6-inch (light guns) equivalent hits."""
+        equivalent_damage = self.return_to_hit(range) * self.return_damage_conversion_factor()
+        return equivalent_damage
 
     def is_active(self):
         """Return True if the gun is active, False if it is Out Of Action."""
@@ -181,8 +187,6 @@ secondary_guns = build_gun_dictionary("secondary_guns.csv")
 # Create the guns from the dictionary by their designation
 four_inch_v = Gun(*destroyer_guns["4 in V"])
 six_inch_xii = Gun(*cruiser_guns["6 in XII"])
-# Print the chance to hit at the range specified
-
 
 # CREATE TEST SHIPS AND GET THEIR THE STAYING POWER
 # Create the ships from manually input values
