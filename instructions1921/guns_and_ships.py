@@ -152,7 +152,10 @@ class Ship:
         """ Damages the ship by a given fractional ratio (0.6 reduces staying power by 60%)"""
         # Change the ship's hit points by the given ratio
         self.hit_points *= 1 - ratio
-        # Update the ship's status
+
+    def update(self):
+        """ Applies damage. Sets starting_hit_points to the current value and updates status"""
+        self.starting_hit_points = self.hit_points
         self.status = self.hit_points / self.staying_power
 
 class Group:
@@ -240,3 +243,5 @@ emden.damage(0.3)
 print(emden.hit_points)
 print(emden.starting_hit_points)
 print(emden.status)
+emden.update()
+print(emden.starting_hit_points)
