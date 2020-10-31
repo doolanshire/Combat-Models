@@ -65,10 +65,10 @@ class Gun:
 
         return damage_equivalent
 
-    def return_equivalent_damage(self, range):
+    def return_equivalent_damage(self, target_range):
         """Return the damage dealt by the gun over one minute at a given range, adjusted to 15-inch (capital guns)
         or 6-inch (light guns) equivalent hits."""
-        equivalent_damage = self.return_to_hit(range) * self.return_damage_conversion_factor()
+        equivalent_damage = self.return_to_hit(target_range) * self.return_damage_conversion_factor()
         return equivalent_damage
 
     def is_active(self):
@@ -146,6 +146,32 @@ class Ship:
         # Set the ship's initial hit points and status
         self.hit_points = self.staying_power
         self.status = 1
+
+
+class Group:
+    """
+    A group of ships, consisting of one ship or more. Groups behave according to the following rules:
+
+    - Groups outnumbering their target group fire with a penalty to their accuracy as defined in the 1921 rules.
+    - When firing, each individual ship in the group fires in turn, targeting only the enemy ships it can damage.
+    - Damage is distributed among all target ships proportionally to their remaining staying power. In other words,
+    all target ships are aggregated into one for damage purposes.
+
+    Note that the same ship can be registered in more than one group. A ship may receive fire as part of a large
+    group and individually (in a different one-ship group) during the same battle. Hence, in this simulation,
+    aggregation is not the norm, but merely another tool at the user's disposal.
+
+    Attributes:
+        - name: the name of the group (string).
+        - members: a list of ships belonging to the group (list).
+    """
+
+    def __init__(self, name):
+        self.name = name
+        self.members = []
+
+    def add_ship(self, ship):
+        self.members.append(ship)
 
 
 def build_gun_dictionary(filename):
