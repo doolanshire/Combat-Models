@@ -243,5 +243,6 @@ emden.damage(0.3)
 print(emden.hit_points)
 print(emden.starting_hit_points)
 print(emden.status)
+# Test the update() method
 emden.update()
 print(emden.starting_hit_points)
