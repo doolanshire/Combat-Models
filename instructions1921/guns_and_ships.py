@@ -147,6 +147,12 @@ class Ship:
         self.hit_points = self.staying_power
         self.status = 1
 
+    def damage(self, ratio):
+        """ Damages the ship by a given fractional ratio (0.6 reduces staying power by 60%)"""
+        # Change the ship's hit points by the given ratio
+        self.hit_points *= 1 - ratio
+        # Update the ship's status
+        self.status = self.hit_points / self.staying_power
 
 class Group:
     """
@@ -171,6 +177,7 @@ class Group:
         self.members = []
 
     def add_ship(self, ship):
+        """Add a ship object to the group members list"""
         self.members.append(ship)
 
 
@@ -224,3 +231,9 @@ print(sydney.staying_power)
 # Fire a test broadside at 10000 yards
 print(emden.main_armament_type.return_to_hit(10000) * emden.main_armament_broadside)
 print(sydney.main_armament_type.return_to_hit(10000) * sydney.main_armament_broadside)
+# Test ship damage
+print("Damage test")
+print(emden.hit_points)
+emden.damage(0.3)
+print(emden.hit_points)
+print(emden.status)
