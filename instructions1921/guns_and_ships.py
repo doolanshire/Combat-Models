@@ -156,7 +156,8 @@ class Ship:
 
 class Group:
     """
-    A group of ships, consisting of one ship or more. Groups behave according to the following rules:
+    A group of ships, consisting of one ship or more. All ships in the simulation must belong to a group,
+    even if they are the group's sole member. Groups behave according to the following rules:
 
     - Groups outnumbering their target group fire with a penalty to their accuracy as defined in the 1921 rules.
     - When firing, each individual ship in the group fires in turn, targeting only the enemy ships it can damage.
