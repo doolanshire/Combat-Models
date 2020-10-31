@@ -67,7 +67,11 @@ class Gun:
 
     def return_equivalent_damage(self, target_range):
         """Return the damage dealt by the gun over one minute at a given range, adjusted to 15-inch (capital guns)
-        or 6-inch (light guns) equivalent hits."""
+        or 6-inch (light guns) equivalent hits.
+
+        Arguments:
+        - target_range: the range to the target in yards (integer).
+        """
         equivalent_damage = self.return_to_hit(target_range) * self.return_damage_conversion_factor()
         return equivalent_damage
 
@@ -92,9 +96,10 @@ class Ship:
         - main_armament_count: the total number of guns of the main type carried by the ship (int).
         - main_armament_broadside: the number of guns the ship can bring to bear in either broadside (int).
         Calculated by the program:
+        - minimum_to_damage: the minimum caliber a gun must have to damage the ship.
         - staying_power: the ship's staying power (int).
-            - For battleships and battle cruisers, measured in 15-inch hits.
-            - For light cruisers and smaller classes, measured in 6-inch hits.
+            * For battleships and battle cruisers, measured in 15-inch hits.
+            * For light cruisers and smaller classes, measured in 6-inch hits.
         - hit_points: begins equal to staying power. Used to keep track of damage (float).
         - starting_hit_points: stores a ship's hit points at the start of each simulation pulse.
         - status: 1 means undamaged, 0 means out of action / firepower kill (float).
@@ -117,6 +122,8 @@ class Ship:
                 self.staying_power *= 3
             else:
                 self.staying_power *= 3.25
+            # Set the minimum caliber of the gun that can damage a battleship.
+            self.minimum_to_damage = 12
         # Calculate the staying power multiplier for battle cruisers based on main gun calibre.
         elif self.hull_class == "battle cruiser":
             if self.main_armament_type.caliber <= 12:
@@ -127,6 +134,8 @@ class Ship:
                 self.staying_power *= 2.5
             else:
                 self.staying_power *= 2.75
+            # Set the minimum caliber of the gun that can damage a battle cruiser.
+            self.minimum_to_damage = 12
         # Calculate the staying power multiplier for light cruisers based on main gun calibre.
         elif self.hull_class == "light cruiser":
             if self.main_armament_type.caliber <= 4:
@@ -135,11 +144,15 @@ class Ship:
                 self.staying_power *= 8
             else:
                 self.staying_power *= 9
+            # Set the minimum caliber of the gun that can damage a battleship.
+            self.minimum_to_damage = 4
         # Calculate the staying power multiplier for light squadron ships based on main gun calibre.
         elif self.hull_class in ("flotilla leader", "destroyer"):
             self.staying_power *= 1
             """Note that a value of 1 in the above line will not change staying power at all. The
             line is left here for clarity and in case one needs to experiment with the value."""
+            # Set the minimum caliber of the gun that can damage a light squadron ships.
+            self.minimum_to_damage = 4
         # Raise an exception if attempting to create a ship without a valid hull class.
         else:
             raise ValueError("Wrong ship class definition")
@@ -149,7 +162,11 @@ class Ship:
         self.status = 1
 
     def damage(self, ratio):
-        """ Damages the ship by a given fractional ratio (0.6 reduces staying power by 60%)"""
+        """ Damages the ship by a given fractional ratio (0.6 reduces staying power by 60%)
+
+        Arguments:
+            - ratio: the fraction by which the ship should be damaged (fraction).
+        """
         # Change the ship's hit points by the given ratio
         self.hit_points *= 1 - ratio
 
@@ -157,6 +174,7 @@ class Ship:
         """ Applies damage. Sets starting_hit_points to the current value and updates status"""
         self.starting_hit_points = self.hit_points
         self.status = self.hit_points / self.staying_power
+
 
 class Group:
     """
@@ -182,7 +200,11 @@ class Group:
         self.members = []
 
     def add_ship(self, ship):
-        """Add a ship object to the group members list"""
+        """Add a ship object to the group members list.
+
+        Arguments:
+            - ship: a Ship object to add to the members list.
+        """
         self.members.append(ship)
 
 
@@ -234,8 +256,8 @@ sydney = Ship("HMAS Sydney", "light cruiser", six_inch_xii, 8, 5)
 print(emden.staying_power)
 print(sydney.staying_power)
 # Fire a test broadside at 10000 yards
-print(emden.main_armament_type.return_to_hit(10000) * emden.main_armament_broadside)
-print(sydney.main_armament_type.return_to_hit(10000) * sydney.main_armament_broadside)
+print(emden.main_armament_type.return_to_hit(10000) * emden.main_armament_broadside * emden.status)
+print(sydney.main_armament_type.return_to_hit(10000) * sydney.main_armament_broadside * emden.status)
 # Test ship damage
 print("Damage test")
 print(emden.hit_points)
@@ -245,4 +267,5 @@ print(emden.starting_hit_points)
 print(emden.status)
 # Test the update() method
 emden.update()
-print(emden.starting_hit_points)
+print(emden.main_armament_type.return_to_hit(10000) * emden.main_armament_broadside * emden.status)
+print(sydney.main_armament_type.return_to_hit(10000) * sydney.main_armament_broadside * emden.status)
