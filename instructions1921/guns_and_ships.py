@@ -96,6 +96,7 @@ class Ship:
             - For battleships and battle cruisers, measured in 15-inch hits.
             - For light cruisers and smaller classes, measured in 6-inch hits.
         - hit_points: begins equal to staying power. Used to keep track of damage (float).
+        - starting_hit_points: stores a ship's hit points at the start of each simulation pulse.
         - status: 1 means undamaged, 0 means out of action / firepower kill (float).
     """
 
@@ -144,7 +145,7 @@ class Ship:
             raise ValueError("Wrong ship class definition")
 
         # Set the ship's initial hit points and status
-        self.hit_points = self.staying_power
+        self.hit_points = self.starting_hit_points = self.staying_power
         self.status = 1
 
     def damage(self, ratio):
@@ -237,4 +238,5 @@ print("Damage test")
 print(emden.hit_points)
 emden.damage(0.3)
 print(emden.hit_points)
+print(emden.starting_hit_points)
 print(emden.status)
