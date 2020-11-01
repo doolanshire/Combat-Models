@@ -175,6 +175,15 @@ class Ship:
         self.starting_hit_points = self.hit_points
         self.status = self.hit_points / self.staying_power
 
+    def __str__(self):
+        """String override method. Return a summary of a ship's stats"""
+        name = self.name
+        hull = self.hull_class
+        guns = self.main_armament_count
+        gun_type = self.main_armament_type.caliber
+        integrity = self.status * 100
+        return "{} ({}) {} x {} in, {}%".format(name, hull, guns, gun_type, integrity)
+
 
 class Group:
     """
@@ -248,24 +257,12 @@ secondary_guns = build_gun_dictionary("secondary_guns.csv")
 four_inch_v = Gun(*destroyer_guns["4 in V"])
 six_inch_xii = Gun(*cruiser_guns["6 in XII"])
 
-# CREATE TEST SHIPS AND GET THEIR THE STAYING POWER
-# Create the ships from manually input values
+# CREATE TEST SHIPS
+print("SHIP CREATION TESTS")
 emden = Ship("SMS Emden", "light cruiser", four_inch_v, 10, 5)
+print(emden)
 sydney = Ship("HMAS Sydney", "light cruiser", six_inch_xii, 8, 5)
-# Print the staying power for their class and armament type
-print(emden.staying_power)
-print(sydney.staying_power)
-# Fire a test broadside at 10000 yards
-print(emden.main_armament_type.return_to_hit(10000) * emden.main_armament_broadside * emden.status)
-print(sydney.main_armament_type.return_to_hit(10000) * sydney.main_armament_broadside * emden.status)
-# Test ship damage
-print("Damage test")
-print(emden.hit_points)
-emden.damage(0.3)
-print(emden.hit_points)
-print(emden.starting_hit_points)
-print(emden.status)
-# Test the update() method
-emden.update()
-print(emden.main_armament_type.return_to_hit(10000) * emden.main_armament_broadside * emden.status)
-print(sydney.main_armament_type.return_to_hit(10000) * sydney.main_armament_broadside * emden.status)
+print(sydney)
+
+# Test group fire
+print("GROUP FIRE TESTS")
