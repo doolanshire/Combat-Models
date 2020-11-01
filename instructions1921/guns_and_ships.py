@@ -218,6 +218,9 @@ class Group:
             - ship: a Ship object to add to the members list.
         """
         self.members.append(ship)
+        self.staying_power += ship.staying_power
+        self.hit_points += ship.hit_points
+        self.status = self.hit_points / self.staying_power
 
     def __str__(self):
         name = self.name
