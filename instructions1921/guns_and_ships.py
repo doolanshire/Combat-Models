@@ -204,9 +204,12 @@ class Group:
         - members: a list of ships belonging to the group (list).
     """
 
-    def __init__(self, name):
+    def __init__(self, name, members):
         self.name = name
-        self.members = []
+        self.members = members
+        self.staying_power = sum(ship.staying_power for ship in members)
+        self.hit_points = self.starting_hit_points = self.staying_power
+        self.status = 1
 
     def add_ship(self, ship):
         """Add a ship object to the group members list.
@@ -215,6 +218,12 @@ class Group:
             - ship: a Ship object to add to the members list.
         """
         self.members.append(ship)
+
+    def __str__(self):
+        name = self.name
+        member_list = ", ".join([ship.name for ship in self.members])
+        status = self.status * 100
+        return "{} ({}), {}%".format(name, member_list, status)
 
 
 def build_gun_dictionary(filename):
@@ -260,9 +269,16 @@ six_inch_xii = Gun(*cruiser_guns["6 in XII"])
 # CREATE TEST SHIPS
 print("SHIP CREATION TESTS")
 emden = Ship("SMS Emden", "light cruiser", four_inch_v, 10, 5)
+dresden = Ship("SMS Dresden", "light cruiser", four_inch_v, 10, 5)
 print(emden)
+print(dresden)
 sydney = Ship("HMAS Sydney", "light cruiser", six_inch_xii, 8, 5)
 print(sydney)
+
+# CREATE TEST GROUPS
+print("GROUP CREATION TESTS")
+german_one = Group("Light cruiser squadron", [emden, dresden])
+print(german_one)
 
 # Test group fire
 print("GROUP FIRE TESTS")
