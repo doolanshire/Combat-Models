@@ -9,7 +9,7 @@ A Python implementation of the *Instructions for Tactical and Strategical Exerci
 
 The aim of this project at least initially is to implement chiefly the firing and damage rules of the Tactical Exercise, in order to estimate attrition in historical battles.
 
-Movement will not be implemented at first – instead, the analyst will introduce the firing intervals and targets for each ship and the distances between them throughout a battle, and the program will compute the attrition levels.
+Movement will not be implemented at first – instead, the user introduces the firing intervals and targets for each ship and the distances between them throughout a battle, and the program will compute the exchange of fire accordingly.
 
 Engagement information will be saved in external CSV files so that different battles may be played effortlessly.
 
@@ -17,10 +17,7 @@ Engagement information will be saved in external CSV files so that different bat
 
 #### Program files:
 
-**guns\_and\_ships.py**: class *Gun* partially implemented, containing the definition and associated methods for a given designation of naval gun. Data is loaded from external CSV files containing naval gun parameters, which can be expanded or modified freely.
-
-Class *Ship* partially implemented, containing the definition and associated methods for a given ship belonging to one of the classes defined in the 1921 war game. Staying power is calculated upon creation from the ship class and armament type. Ship parameters have to be manually input for now.
-
+**guns\_and\_ships.py**: implements classes for Gun, Ship, Group and Side objects. Each side has a series of groups, and each group contains a number of ships, each carrying guns.
 
 #### Data files:
 
@@ -33,7 +30,6 @@ Class *Ship* partially implemented, containing the definition and associated met
 **secondary\_guns.csv**: containing information on secondary guns (6 in XII, 6 in VII, 5.5 in, 4 in IX, 4 in VII).
 
 ## To do
-* Implement a "ship" class as an armoured container of gun objects.
 * Implement functions to read and parse ship data.
 * Add battle logic.
 * Design and implement engagement input files.
