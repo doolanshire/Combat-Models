@@ -1,4 +1,5 @@
 import csv
+from math import ceil, floor, e
 
 
 class Gun:
@@ -42,7 +43,7 @@ class Gun:
     def return_damage_conversion_factor(self):
         """Return the conversion factor of a caliber to 6-inch hits (light guns) or 15-inch hits (heavy guns)"""
         # Conversion factor to 6-inch hits for light gun calibers
-        if self.caliber <= 7.5:
+        if self.caliber <= 9.5:
             # The conversion factors below are as stated in the original 1921 rules
             if self.caliber == 4:
                 damage_equivalent = 1/3
@@ -53,13 +54,13 @@ class Gun:
             elif self.caliber == 7.5:
                 damage_equivalent = 3
             # All other light calibers are determined through interpolation
-            # We used polynomial regression (R squared value of 0.9966)
+            # We used exponential regression (R squared value of 0.9941)
             else:
-                damage_equivalent = 1 / ((0.1746 * (self.caliber ** 2)) - (2.7523 * self.caliber) + 11.168)
+                damage_equivalent = 1 / (37.523 * (e**(-0.622 * self.caliber)))
         # Conversion factor to 15-inch hits for heavy gun calibers
-        elif self.caliber > 7.5:
+        elif self.caliber > 9.5:
             # Here we just use an equation for all cases because damage for big guns scales linearly
-            damage_equivalent = 1 / ((self.caliber/3) + 6)
+            damage_equivalent = 1 / ((-self.caliber / 3) + 6)
         else:
             raise ValueError("Caliber must be a positive real number")
 
@@ -103,6 +104,8 @@ class Ship:
         - hit_points: begins equal to staying power. Used to keep track of damage (float).
         - starting_hit_points: stores a ship's hit points at the start of each simulation pulse.
         - status: 1 means undamaged, 0 means out of action / firepower kill (float).
+        - hits_received: a record of hits received by caliber until becoming a firepower kill (dictionary).
+            * Hits received are saved as a float in case the decimal part (partial hits) is needed for analysis.
     """
 
     def __init__(self, name, hull_class, main_armament_type, main_armament_count, main_armament_broadside):
@@ -160,15 +163,73 @@ class Ship:
         # Set the ship's initial hit points and status
         self.hit_points = self.starting_hit_points = self.staying_power
         self.status = 1
+        self.hits_received = {}
 
-    def damage(self, ratio):
-        """ Damages the ship by a given fractional ratio (0.6 reduces staying power by 60%)
+    def fire(self, target, target_range, salvo_size=None, distribution=1, modifier=1):
+        """Fire at a target ship. This function records the hits received by the target, then converts them to
+        equivalent 6-inch or 14-inch hits and applies the resulting damage.
 
         Arguments:
-            - ratio: the fraction by which the ship should be damaged (fraction).
+        - target: the target ship (Ship).
+        - distribution: fraction of the firing ship's firepower directed at the target (fraction). Defaults to 1,
+        meaning the full available firepower is used. Changing this number is the standard way of splitting fire
+        between two or more targets. See the Group class fire() documentation to understand why this is done.
+        - modifier: a multiplier to firing effectiveness (fraction). Defaults to 1, meaning no change. Used to apply
+        various modifiers such as those derived from concentration of fire, visibility, fire control, etc. The fire()
+        method for the group the ship belongs to can pass a different modifier to reflect various aspects of the rules
+        or arbitrary decisions by the user.
         """
-        # Change the ship's hit points by the given ratio
-        self.hit_points *= 1 - ratio
+
+        firing_caliber = self.main_armament_type.caliber
+        base_to_hit = self.main_armament_type.return_to_hit(target_range)
+        # Unless otherwise specified, the ship is assumed to fire a full broadside
+        if salvo_size is None:
+            salvo_size = self.main_armament_broadside
+        # Calculate the number of hits in a one-minute pulse taking all modifiers into account
+        hits = base_to_hit * salvo_size * distribution * modifier * self.status
+        # Record the hits on the target
+        target.record_hits(firing_caliber, hits)
+        # Apply damage to the target
+        # Check if turret guns are firing on a light ship. If so, apply special damage as per table B of the rules
+        if firing_caliber > 9.5 and target.hull_class in ("light cruiser", "flotilla leader", "destroyer"):
+            # When targeting light cruisers
+            if target.hull_class == "light cruiser":
+                if target.main_armament_type.caliber >= 7.5:
+                    # Damage the target for 1/4 of its total staying power per hit
+                    target.damage(hits * (target.staying_power / 4))
+                elif target.main_armament_type.caliber >= 6:
+                    # Damage the target for 1/3 of its total staying power per hit
+                    target.damage(hits * (target.staying_power / 3))
+                elif target.main_armament_type.caliber >= 4:
+                    # Damage the target for 1/2 of its total staying power per hit
+                    target.damage(hits * (target.staying_power / 2))
+            # When targeting flotilla leaders or destroyers
+            else:
+                # Knock the target out after one hit
+                target.damage(hits * target.staying_power)
+        # If not, check whether the caliber is large enough to affect the target, and apply damage normally
+        else:
+            if firing_caliber >= target.minimum_to_damage:
+                target.damage(hits * self.main_armament_type.return_damage_conversion_factor())
+
+    def damage(self, damage_points):
+        """ Damages the ship by a given number of points (6-inch or 15-inch hit equivalents)
+
+        Arguments:
+            - damage_points: the number of damage points to inflict on the target's HP pool, normalised to
+            6-inch or 15-inch hits (float).
+        """
+        # Reduce the target ship's HP pool by the number given, making sure it never goes into the negative.
+        self.hit_points -= min(damage_points, self.hit_points)
+
+    def record_hits(self, caliber, hits):
+        """Record a number of hits by a gun of a given caliber in the 'hits_received' dictionary"""
+        # If the ship has already received hits of the caliber given, add to the existing record
+        if caliber in self.hits_received:
+            self.hits_received[caliber] += hits
+        # Else, make a new entry
+        else:
+            self.hits_received[caliber] = hits
 
     def update(self):
         """ Applies damage. Sets starting_hit_points to the current value and updates status"""
@@ -284,4 +345,8 @@ german_one = Group("Light cruiser squadron", [emden, dresden])
 print(german_one)
 
 # Test group fire
-print("GROUP FIRE TESTS")
+print("FIRE TESTS")
+sydney.fire(emden, 11000)
+print(emden.hits_received)
+emden.update()
+print(emden)
