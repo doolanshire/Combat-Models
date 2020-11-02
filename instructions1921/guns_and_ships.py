@@ -224,12 +224,14 @@ class Ship:
 
     def record_hits(self, caliber, hits):
         """Record a number of hits by a gun of a given caliber in the 'hits_received' dictionary"""
-        # If the ship has already received hits of the caliber given, add to the existing record
-        if caliber in self.hits_received:
-            self.hits_received[caliber] += hits
-        # Else, make a new entry
-        else:
-            self.hits_received[caliber] = hits
+        # Record hits only if the ship is not already knocked out
+        if self.hit_points > 0:
+            # If the ship has already received hits of the caliber given, add to the existing record
+            if caliber in self.hits_received:
+                self.hits_received[caliber] += hits
+            # Else, make a new entry
+            else:
+                self.hits_received[caliber] = hits
 
     def update(self):
         """ Applies damage. Sets starting_hit_points to the current value and updates status"""
