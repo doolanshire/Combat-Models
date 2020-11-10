@@ -271,7 +271,7 @@ class Group:
         self.name = name
         self.members = members
         self.staying_power = sum(ship.staying_power for ship in members)
-        self.hit_points = self.starting_hit_points = self.staying_power
+        self.hit_points = self.staying_power
         self.status = 1
 
     def add_ship(self, ship):
@@ -285,7 +285,15 @@ class Group:
         self.hit_points += ship.hit_points
         self.status = self.hit_points / self.staying_power
 
+    def update(self):
+        """ Applies damage. Sets starting_hit_points to the current value and updates status"""
+        for ship in self.members:
+            ship.update()
+        self.hit_points = sum(ship.hit_points for ship in self.members)
+        self.status = self.hit_points / self.staying_power
+
     def __str__(self):
+        """String override method. Return a summary of a group's members and stats"""
         name = self.name
         member_list = ", ".join([ship.name for ship in self.members])
         status = self.status * 100
