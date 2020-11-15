@@ -166,7 +166,7 @@ class Ship:
         self.status = 1
         self.hits_received = {}
 
-    def fire(self, target, target_range, salvo_size=None, distribution=1, modifier=1):
+    def fire(self, target, target_range, distribution=1, salvo_size = None, modifier=1):
         """Fire at a target ship. This function records the hits received by the target, then converts them to
         equivalent 6-inch or 14-inch hits and applies the resulting damage.
 
@@ -266,13 +266,16 @@ class Group:
     Attributes:
         - name: the name of the group (string).
         - members: a list of ships belonging to the group (list).
+        - staying_power: the sum total of the staying power of all members
+        - starting_hit_points: the sum total of the remaining hit points of all members at the beginning of a time pulse
+        - hit_points: the sum total of the remaining hit points of all members at any given time
     """
 
     def __init__(self, name, members):
         self.name = name
         self.members = members
         self.staying_power = sum(ship.staying_power for ship in members)
-        self.hit_points = self.staying_power
+        self.hit_points = self.starting_hit_points = self.staying_power
         self.status = 1
 
     def add_ship(self, ship):
@@ -285,6 +288,19 @@ class Group:
         self.staying_power += ship.staying_power
         self.hit_points += ship.hit_points
         self.status = self.hit_points / self.staying_power
+
+    def fire(self, target_group, target_range, salvo_size=None, modifier=1):
+        """Fire at the target group at the specified range.
+
+        Arguments:
+            - target_group: the enemy group to fire at (Group object).
+            - target_range: the range at which the enemy group is.
+        """
+        fire_distribution = [ship.starting_hit_points / target_group.starting_hit_points
+                             for ship in target_group.members]
+        for own_ship in self.members:
+            for target_number, target_ship in enumerate(target_group.members):
+                own_ship.fire(target_ship, target_range, fire_distribution[target_number], salvo_size, modifier)
 
     def update(self):
         """ Applies damage. Sets starting_hit_points to the current value and updates status"""
@@ -342,6 +358,7 @@ secondary_guns = build_gun_dictionary("secondary_guns.csv")
 print("SHIP CREATION TESTS")
 emden = Ship("SMS Emden", "light cruiser", destroyer_guns["4 in V"], 10, 5)
 dresden = Ship("SMS Dresden", "light cruiser", destroyer_guns["4 in V"], 10, 5)
+print("* Ship information *")
 print(emden)
 print(dresden)
 sydney = Ship("HMAS Sydney", "light cruiser", cruiser_guns["6 in XII"], 8, 5)
@@ -349,6 +366,7 @@ print(sydney)
 
 # CREATE TEST GROUPS
 print("GROUP CREATION TESTS")
+print("* Group information *")
 german_one = Group("Light cruiser squadron", [emden, dresden])
 print(german_one)
 british_one = Group("HMAS Sydney", [sydney])
@@ -356,7 +374,9 @@ print(british_one)
 
 # Test group fire
 print("FIRE TESTS")
-sydney.fire(emden, 11000)
+print("* British group one fires *")
+british_one.fire(german_one, 8000)
+german_one.update()
+print(german_one)
+print(emden.status)
 print(emden.hits_received)
-emden.update()
-print(emden)
