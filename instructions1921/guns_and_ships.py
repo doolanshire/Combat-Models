@@ -338,18 +338,13 @@ destroyer_guns = build_gun_dictionary("destroyer_guns.csv")
 # Build the gun dictionary for destroyers
 secondary_guns = build_gun_dictionary("secondary_guns.csv")
 
-# CREATE TEST GUNS AND GET THEIR TO HIT VALUE AT AN ARBITRARY RANGE
-# Create the guns from the dictionary by their designation
-four_inch_v = destroyer_guns["4 in V"]
-six_inch_xii = cruiser_guns["6 in XII"]
-
 # CREATE TEST SHIPS
 print("SHIP CREATION TESTS")
-emden = Ship("SMS Emden", "light cruiser", four_inch_v, 10, 5)
-dresden = Ship("SMS Dresden", "light cruiser", four_inch_v, 10, 5)
+emden = Ship("SMS Emden", "light cruiser", destroyer_guns["4 in V"], 10, 5)
+dresden = Ship("SMS Dresden", "light cruiser", destroyer_guns["4 in V"], 10, 5)
 print(emden)
 print(dresden)
-sydney = Ship("HMAS Sydney", "light cruiser", six_inch_xii, 8, 5)
+sydney = Ship("HMAS Sydney", "light cruiser", cruiser_guns["6 in XII"], 8, 5)
 print(sydney)
 
 # CREATE TEST GROUPS
