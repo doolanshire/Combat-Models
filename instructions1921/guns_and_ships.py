@@ -166,7 +166,7 @@ class Ship:
         self.status = 1
         self.hits_received = {}
 
-    def fire(self, target, target_range, distribution=1, salvo_size = None, modifier=1):
+    def fire(self, target, target_range, distribution=1, salvo_size=None, modifier=1):
         """Fire at a target ship. This function records the hits received by the target, then converts them to
         equivalent 6-inch or 14-inch hits and applies the resulting damage.
 
