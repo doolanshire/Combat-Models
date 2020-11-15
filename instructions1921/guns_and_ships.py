@@ -351,6 +351,8 @@ print(sydney)
 print("GROUP CREATION TESTS")
 german_one = Group("Light cruiser squadron", [emden, dresden])
 print(german_one)
+british_one = Group("HMAS Sydney", [sydney])
+print(british_one)
 
 # Test group fire
 print("FIRE TESTS")
