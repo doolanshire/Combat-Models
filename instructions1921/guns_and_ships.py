@@ -17,7 +17,8 @@ class Gun:
         - active: whether the gun is active (True) or Out Of Action (False). All guns are initialised as active.
     """
 
-    def __init__(self, caliber, max_range, long_to_hit, long_min, effective_to_hit, effective_min, short_to_hit):
+    def __init__(self, name, caliber, max_range, long_to_hit, long_min, effective_to_hit, effective_min, short_to_hit):
+        self.name = name
         self.caliber = max(0, caliber)
         self.max_range = max_range
         self.long_to_hit = long_to_hit
@@ -319,7 +320,9 @@ def build_gun_dictionary(filename):
         next(reader)
         for row in reader:
             gun_data = list(row)
-            gun_dict[gun_data[0]] = list(map(float, gun_data[1:]))
+            gun_dictionary_entry = [gun_data[0]]
+            gun_dictionary_entry += list(map(float, gun_data[1:]))
+            gun_dict[gun_data[0]] = Gun(*gun_dictionary_entry)
     return gun_dict
 
 
@@ -337,8 +340,8 @@ secondary_guns = build_gun_dictionary("secondary_guns.csv")
 
 # CREATE TEST GUNS AND GET THEIR TO HIT VALUE AT AN ARBITRARY RANGE
 # Create the guns from the dictionary by their designation
-four_inch_v = Gun(*destroyer_guns["4 in V"])
-six_inch_xii = Gun(*cruiser_guns["6 in XII"])
+four_inch_v = destroyer_guns["4 in V"]
+six_inch_xii = cruiser_guns["6 in XII"]
 
 # CREATE TEST SHIPS
 print("SHIP CREATION TESTS")
