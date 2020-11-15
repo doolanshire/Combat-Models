@@ -1,5 +1,5 @@
 import csv
-from math import ceil, floor, e
+from math import e
 
 
 class Gun:
