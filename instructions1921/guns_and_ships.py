@@ -1,5 +1,6 @@
 import csv
 from math import e
+import plot
 
 
 class Gun:
@@ -296,8 +297,11 @@ class Group:
             - target_group: the enemy group to fire at (Group object).
             - target_range: the range at which the enemy group is.
         """
-        fire_distribution = [ship.starting_hit_points / target_group.starting_hit_points
-                             for ship in target_group.members]
+        if target_group.hit_points > 0:
+            fire_distribution = [ship.starting_hit_points / target_group.hit_points
+                                 for ship in target_group.members]
+        else:
+            fire_distribution = [1 / len(target_group.members)] * len(target_group.members)
         for own_ship in self.members:
             for target_number, target_ship in enumerate(target_group.members):
                 own_ship.fire(target_ship, target_range, fire_distribution[target_number], salvo_size, modifier)
@@ -367,16 +371,28 @@ print(sydney)
 # CREATE TEST GROUPS
 print("GROUP CREATION TESTS")
 print("* Group information *")
-german_one = Group("Light cruiser squadron", [emden, dresden])
+german_one = Group("SMS Emden", [emden])
 print(german_one)
 british_one = Group("HMAS Sydney", [sydney])
 print(british_one)
 
 # Test group fire
 print("FIRE TESTS")
-print("* British group one fires *")
-british_one.fire(german_one, 8000)
-german_one.update()
+
+side_a = [british_one.hit_points]
+side_b = [german_one.hit_points]
+distance = 5000
+
+while british_one.status > 0 and german_one.status > 0:
+    british_one.fire(german_one, distance)
+    german_one.fire(british_one, distance, None, 2)
+    british_one.update()
+    german_one.update()
+    side_a.append(british_one.hit_points)
+    side_b.append(german_one.hit_points)
+
+print(british_one)
+print(sydney.hits_received)
 print(german_one)
-print(emden.status)
 print(emden.hits_received)
+plot.strength_plot(side_a, british_one.name, side_b, german_one.name)
