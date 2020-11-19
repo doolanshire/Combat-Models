@@ -7,17 +7,19 @@ A Python implementation of the *Instructions for Tactical and Strategical Exerci
 
 ## Objective
 
-The aim of this project at least initially is to implement chiefly the firing and damage rules of the Tactical Exercise, in order to estimate attrition in historical battles.
+The aim of this project is implementing the fire and damage rules of the Tactical Exercise, in order to estimate attrition in historical battles.
 
-Movement will not be implemented at first – instead, the user introduces the firing intervals and targets for each ship and the distances between them throughout a battle, and the program will compute the exchange of fire accordingly.
+Movement is not simulated directly – instead, the user introduces the firing intervals and targets for each ship group and the distances between them throughout a battle. The program then computes the exchange of fire accordingly.
 
-Engagement information will be saved in external CSV files so that different battles may be played effortlessly.
+Engagement information will eventually be stored in external CSV files so that different battles may be played with little effort.
 
-## Implemented so far
+## Done so far
 
 #### Program files:
 
-**guns\_and\_ships.py**: implements classes for Gun, Ship, Group and Side objects. Each side has a series of groups, and each group contains a number of ships, each carrying guns.
+**guns\_and\_ships.py**: implements the _Gun_, _Ship_ and _Group_ classes and the necessary methods.
+
+**plot.py**: a simple function to plot attrition over time.
 
 #### Data files:
 
@@ -30,6 +32,7 @@ Engagement information will be saved in external CSV files so that different bat
 **secondary\_guns.csv**: containing information on secondary guns (6 in XII, 6 in VII, 5.5 in, 4 in IX, 4 in VII).
 
 ## To do
-* Implement functions to read and parse ship data.
-* Add battle logic.
-* Design and implement engagement input files.
+* Implement functions to read and parse ship data from external files.
+* Define fire events (firer, target, range, start time, duration) that populate and execute an engagement timeline for each side.
+* Design and implement engagement input files – essentially order of battle and fire events for each side.
+* Add an option to define hit rates using an interpolation function rather than tabular data.
