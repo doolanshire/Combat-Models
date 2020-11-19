@@ -361,6 +361,7 @@ secondary_guns = build_gun_dictionary("secondary_guns.csv")
 # CREATE TEST SHIPS
 print("SHIP CREATION TESTS")
 emden = Ship("SMS Emden", "light cruiser", destroyer_guns["4 in V"], 10, 5)
+emden.main_armament_type.caliber = 4.1
 dresden = Ship("SMS Dresden", "light cruiser", destroyer_guns["4 in V"], 10, 5)
 print("* Ship information *")
 print(emden)
