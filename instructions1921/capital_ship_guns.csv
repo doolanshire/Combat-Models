@@ -1,5 +1,5 @@
-"designation","caliber","max_range","long_to_hit","long_min","effective_to_hit","effective_min","short_to_hit"
-"16 in",16,36000,0.0625,17000,0.125,13000,0.25
-"15 in I",15,23700,0.0625,16000,0.125,12000,0.25
-"13.5 in V",13.5,23500,0.05,15000,0.1,11000,0.2
-"12 in XI",12,20400,0.05,14000,0.1,10000,0.2
+"designation","type","caliber","max_range","long_to_hit","long_min","effective_to_hit","effective_min","short_to_hit"
+"16 in","capital",16,36000,0.0625,17000,0.125,13000,0.25
+"15 in I","capital",15,23700,0.0625,16000,0.125,12000,0.25
+"13.5 in V","capital",13.5,23500,0.05,15000,0.1,11000,0.2
+"12 in XI","capital",12,20400,0.05,14000,0.1,10000,0.2

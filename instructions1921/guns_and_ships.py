@@ -8,6 +8,8 @@ class Gun:
     A naval gun, as mounted on a ship.
 
     Attributes:
+        - name: the gun designation in the 1921 tables.
+        - mount: the gun mount type (capital, secondary, cruiser, destroyer) in the 1921 tables.
         - caliber: the caliber of the gun in inches.
         - max_range: maximum range in yards.
         - long_to_hit: chance to hit per gun per minute at long range.
@@ -18,8 +20,10 @@ class Gun:
         - active: whether the gun is active (True) or Out Of Action (False). All guns are initialised as active.
     """
 
-    def __init__(self, name, caliber, max_range, long_to_hit, long_min, effective_to_hit, effective_min, short_to_hit):
+    def __init__(self, name, mount, caliber, max_range, long_to_hit, long_min, effective_to_hit, effective_min,
+                 short_to_hit):
         self.name = name
+        self.type = mount
         self.caliber = max(0, caliber)
         self.max_range = max_range
         self.long_to_hit = long_to_hit
@@ -340,8 +344,8 @@ def build_gun_dictionary(filename):
         next(reader)
         for row in reader:
             gun_data = list(row)
-            gun_dictionary_entry = [gun_data[0]]
-            gun_dictionary_entry += list(map(float, gun_data[1:]))
+            gun_dictionary_entry = [gun_data[0]] + [gun_data[1]]
+            gun_dictionary_entry += list(map(float, gun_data[2:]))
             gun_dict[gun_data[0]] = Gun(*gun_dictionary_entry)
     return gun_dict
 
