@@ -325,6 +325,27 @@ class Group:
         return "{} ({}), {}%".format(name, member_list, status)
 
 
+class Side:
+    """
+    One of two opposing sides in a battle, formed by one or more groups.
+    """
+
+    def __init__(self, name, groups):
+        self.name = name
+        self.groups = groups
+        self.staying_power = sum(group.staying_power for group in groups)
+        self.hit_points = self.starting_hit_points = self.staying_power
+        self.status = 1
+        self.fire_events = []
+        self.latest_event = 0
+
+    def update(self):
+        for group in self.groups:
+            group.update()
+        self.hit_points = sum(group.hit_points for group in self.groups)
+        self.status = self.hit_points / self.staying_power
+
+
 def build_gun_dictionary(filename):
     """Build a dictionary of gun parameters from an external CSV file:
         - Key: the gun designation (e.g. '13.5 in V' or '12 in XI')
