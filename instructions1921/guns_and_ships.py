@@ -23,7 +23,7 @@ class Gun:
     def __init__(self, name, mount, caliber, max_range, long_to_hit, long_min, effective_to_hit, effective_min,
                  short_to_hit):
         self.name = name
-        self.type = mount
+        self.mount = mount
         self.caliber = max(0, caliber)
         self.max_range = max_range
         self.long_to_hit = long_to_hit
@@ -192,6 +192,22 @@ class Ship:
         if salvo_size is None:
             salvo_size = self.main_armament_broadside
         # Calculate the number of hits in a one-minute pulse taking all modifiers into account
+        # Check if any special rules apply due to target size
+        # Turret guns against light division
+        if self.main_armament_type.mount == "capital":
+            if target.hull_class == "light cruiser":
+                modifier *= 1 / 3
+            elif target.hull_class in ("flotilla leader", "destroyer"):
+                modifier *= 0.125
+        # Cruiser guns against destroyers and flotilla leaders
+        elif self.main_armament_type.mount == "cruiser" and target.hull_class in ("flotilla leader", "destroyer"):
+            modifier *= 0.2
+        # Destroyer / flotilla leader guns against light cruisers
+        elif self.main_armament_type.mount == "destroyer" and target.hull_class == "light cruiser":
+            modifier *= 2
+        # Secondary guns against destroyers and flotilla leaders
+        elif self.main_armament_type == "secondary" and target.hull_class in ("flotilla leader", "destroyer"):
+            modifier *= 0.2
         hits = base_to_hit * salvo_size * distribution * modifier * self.status
         # Record the hits on the target
         target.record_hits(firing_caliber, hits)
@@ -411,7 +427,7 @@ distance = 5000
 
 while british_one.status > 0 and german_one.status > 0:
     british_one.fire(german_one, distance)
-    german_one.fire(british_one, distance, None, 2)
+    german_one.fire(british_one, distance)
     british_one.update()
     german_one.update()
     side_a.append(british_one.hit_points)
