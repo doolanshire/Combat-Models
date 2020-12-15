@@ -361,6 +361,13 @@ class Side:
         self.hit_points = sum(group.hit_points for group in self.groups)
         self.status = self.hit_points / self.staying_power
 
+    def __str__(self):
+        group_names = [group.name for group in self.groups]
+        group_names_string = ", ".join(group_names)
+        strength = self.status * 100
+        side_string = "{} ({})\nRemaining strength: {}%".format(self.name, group_names_string, strength)
+        return side_string
+
 
 def build_gun_dictionary(filename):
     """Build a dictionary of gun parameters from an external CSV file:
@@ -402,7 +409,6 @@ secondary_guns = build_gun_dictionary("secondary_guns.csv")
 # CREATE TEST SHIPS
 print("SHIP CREATION TESTS")
 emden = Ship("SMS Emden", "light cruiser", destroyer_guns["4 in V"], 10, 5)
-emden.main_armament_type.caliber = 4.1
 dresden = Ship("SMS Dresden", "light cruiser", destroyer_guns["4 in V"], 10, 5)
 print("* Ship information *")
 print(emden)
@@ -414,9 +420,15 @@ print(sydney)
 print("GROUP CREATION TESTS")
 print("* Group information *")
 german_one = Group("SMS Emden", [emden])
+german_two = Group("SMS Dresden", [dresden])
 print(german_one)
 british_one = Group("HMAS Sydney", [sydney])
 print(british_one)
+
+# Test side creation
+print("* Creating German side *")
+sideA = Side("Germany", [german_one, german_two])
+print(sideA)
 
 # Test group fire
 print("FIRE TESTS")
