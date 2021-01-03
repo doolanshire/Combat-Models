@@ -1,4 +1,3 @@
-import copy
 import csv
 from math import e
 import plot
@@ -389,9 +388,9 @@ def build_gun_dictionary(filename):
         next(reader)
         for row in reader:
             gun_data = list(row)
-            gun_dictionary_entry = [gun_data[0]] + [gun_data[1]]
+            gun_dictionary_entry = gun_data[:2]
             gun_dictionary_entry += list(map(float, gun_data[2:]))
-            gun_dict[gun_data[0]] = Gun(*gun_dictionary_entry)
+            gun_dict[gun_data[0]] = gun_dictionary_entry
     return gun_dict
 
 
@@ -409,13 +408,13 @@ secondary_guns = build_gun_dictionary("secondary_guns.csv")
 
 # CREATE TEST SHIPS
 print("SHIP CREATION TESTS")
-emden = Ship("SMS Emden", "light cruiser", copy.copy(destroyer_guns["4 in V"]), 10, 5)
+emden = Ship("SMS Emden", "light cruiser", Gun(*destroyer_guns["4 in V"]), 10, 5)
 emden.main_armament_type.caliber = 4.1
-dresden = Ship("SMS Dresden", "light cruiser", copy.copy(destroyer_guns["4 in V"]), 10, 5)
+dresden = Ship("SMS Dresden", "light cruiser", Gun(*destroyer_guns["4 in V"]), 10, 5)
 print("* Ship information *")
 print(emden)
 print(dresden)
-sydney = Ship("HMAS Sydney", "light cruiser", cruiser_guns["6 in XII"], 8, 5)
+sydney = Ship("HMAS Sydney", "light cruiser", Gun(*cruiser_guns["6 in XII"]), 8, 5)
 print(sydney)
 
 # CREATE TEST GROUPS
