@@ -369,6 +369,16 @@ class Side:
         return side_string
 
 
+class Battle:
+    """A battle between two opposing sides. This class contains the data structures and methods needed to dictate
+    which group from which side fires and when."""
+
+    def __init__(self, name, blue_side, red_side):
+        self.name = name
+        self.blue_side = blue_side
+        self.red_side = red_side
+
+
 def build_gun_dictionary(filename):
     """Build a dictionary of gun parameters from an external CSV file:
         - Key: the gun designation (e.g. '13.5 in V' or '12 in XI')
