@@ -4,8 +4,7 @@ import plot
 
 
 class Gun:
-    """
-    A naval gun, as mounted on a ship.
+    """A naval gun, as mounted on a ship.
 
     Attributes:
         - name: the gun designation in the 1921 tables.
@@ -158,8 +157,8 @@ class Ship:
         # Calculate the staying power multiplier for light squadron ships based on main gun calibre.
         elif self.hull_class in ("flotilla leader", "destroyer"):
             self.staying_power *= 1
-            """Note that a value of 1 in the above line will not change staying power at all. The
-            line is left here for clarity and in case one needs to experiment with the value."""
+            # Note that a value of 1 in the above line will not change staying power at all. The
+            # line is left here for clarity and in case one needs to experiment with the value.
             # Set the minimum caliber of the gun that can damage a light squadron ships.
             self.minimum_to_damage = 4
         # Raise an exception if attempting to create a ship without a valid hull class.
@@ -180,10 +179,11 @@ class Ship:
         - distribution: fraction of the firing ship's firepower directed at the target (fraction). Defaults to 1,
         meaning the full available firepower is used. Changing this number is the standard way of splitting fire
         between two or more targets. See the Group class fire() documentation to understand why this is done.
-        - modifier: a multiplier to firing effectiveness (fraction). Defaults to 1, meaning no change. Used to apply
-        various modifiers such as those derived from concentration of fire, visibility, fire control, etc. The fire()
-        method for the group the ship belongs to can pass a different modifier to reflect various aspects of the rules
-        or arbitrary decisions by the user.
+        - salvo_size: the number of guns firing, passed to the Ship class fire method. Defaults to the broadside
+        value of each ship.
+        - modifier: a multiplier to firing effectiveness (fraction). Defaults to 1. This argument is used to introduce
+        variables not explicitly reflected in the 1921 rules and left instead to the discretion of the umpire, such as
+        visibility, crew training, fire direction differences, etc.
         """
 
         firing_caliber = self.main_armament_type.caliber
@@ -316,6 +316,11 @@ class Group:
         Arguments:
             - target_group: the enemy group to fire at (Group object).
             - target_range: the range at which the enemy group is.
+            - salvo size: the number of guns firing, passed to the Ship class fire method. Defaults to the broadside
+            value of each ship.
+            - modifier: an arbitrary multiplier to firepower, passed to the Ship class fire method. Defaults to 1.
+            This argument is used to introduce variables not explicitly reflected in the 1921 rules and left instead
+            to the discretion of the umpire, such as visibility, crew training, fire direction differences, etc.
         """
         if target_group.hit_points > 0:
             fire_distribution = [ship.starting_hit_points / target_group.hit_points
@@ -327,7 +332,7 @@ class Group:
                 own_ship.fire(target_ship, target_range, fire_distribution[target_number], salvo_size, modifier)
 
     def update(self):
-        """ Applies damage. Sets starting_hit_points to the current value and updates status"""
+        """ Applies pending damage. Sets starting_hit_points to the current value and updates status."""
         for ship in self.members:
             ship.update()
         self.hit_points = sum(ship.hit_points for ship in self.members)
@@ -342,9 +347,7 @@ class Group:
 
 
 class Side:
-    """
-    One of two opposing sides in a battle, formed by one or more groups.
-    """
+    """One of two opposing sides in a battle, formed by one or more groups."""
 
     def __init__(self, name, groups):
         self.name = name
@@ -356,6 +359,9 @@ class Side:
         self.latest_event = 0
 
     def update(self):
+        """Applies pending damage to all groups in the side, and updates hit points and status accordingly.
+        This method is run once every time pulse.
+        """
         for group in self.groups:
             group.update()
         self.hit_points = sum(group.hit_points for group in self.groups)
@@ -371,7 +377,8 @@ class Side:
 
 class Battle:
     """A battle between two opposing sides. This class contains the data structures and methods needed to dictate
-    which group from which side fires and when."""
+    which group from which side fires and when.
+    """
 
     def __init__(self, name, blue_side, red_side):
         self.name = name
