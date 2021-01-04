@@ -367,6 +367,29 @@ class Side:
         self.hit_points = sum(group.hit_points for group in self.groups)
         self.status = self.hit_points / self.staying_power
 
+    def register_fire_event(self, firer, target, target_range, start, duration, salvo_size=None, modifier=1):
+        """Add a fire event to the side. Fire events are defined by:
+                - firer: the index of the group that is firing (0 = first group, 1 = second group...)
+                - target_ the index of the target group in the enemy side (0 = first, 1 = second...)
+                - target_range: the range at which the group is firing, in yards.
+                - start: the minute at which fire starts.
+                - duration: the duration of the action in minutes.
+                - salvo_size: a fraction determining how many guns bear (defaults to None meaning full a broadside)
+                - modifier: an arbitrary multiplier to firepower, passed to the Group class fire method. Defaults to 1.
+            This argument is used to introduce variables not explicitly reflected in the 1921 rules and left instead
+            to the discretion of the umpire, such as visibility, crew training, fire direction differences, etc.
+        """
+
+        # Check whether this event will finish later than any other of the side's events.
+        if start + duration > self.latest_event:
+            self.latest_event = start + duration + 1
+
+        # Make a tuple representing all the event's parameters
+        new_event = (firer, target, target_range, start, start + duration, salvo_size, modifier)
+
+        # Append the tuple to the list of fire events for the side
+        self.fire_events.append(new_event)
+
     def __str__(self):
         group_names = [group.name for group in self.groups]
         group_names_string = ", ".join(group_names)
