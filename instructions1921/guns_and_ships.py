@@ -471,6 +471,11 @@ print("* Creating German side *")
 sideA = Side("Germany", [german_one, german_two])
 print(sideA)
 
+# Test fire event registration
+sideA.register_fire_event(0, 0, 10000, 0, 12, None, 1)
+print(sideA.latest_event)
+print(sideA.fire_events)
+
 # Test group fire
 print("FIRE TESTS")
 
