@@ -32,7 +32,8 @@ Engagement information will eventually be stored in external CSV files so that d
 **secondary\_guns.csv**: containing information on secondary guns (6 in XII, 6 in VII, 5.5 in, 4 in IX, 4 in VII).
 
 ## To do
+* Fix the *salvo size* parameter to represent the ratio of guns firing rather than an absolute number. The latter does
+  not make a lot of sense when handling groups of different ship classes.
 * Implement functions to read and parse ship data from external files.
-* Define fire events (firer, target, range, start time, duration) that populate and execute an engagement timeline for each side.
 * Design and implement engagement input files – essentially order of battle and fire events for each side.
 * Add an option to define hit rates using an interpolation function rather than tabular data.
