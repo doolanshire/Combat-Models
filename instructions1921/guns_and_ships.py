@@ -403,12 +403,12 @@ class Battle:
     which group from which side fires and when.
     """
 
-    def __init__(self, name, side_A, side_B):
+    def __init__(self, name, side_a, side_b):
         self.name = name
-        self.side_A = side_A
-        self.side_B = side_B
+        self.side_a = side_a
+        self.side_b = side_b
         # Determine the battle duration.
-        battle_duration = max(self.side_A.latest_event, self.side_B.latest_event)
+        battle_duration = max(self.side_a.latest_event, self.side_b.latest_event)
         # Initialise fire event timelines for both sides.
         self.side_A_timeline = [[] for _ in range(battle_duration)]
         self.side_B_timeline = [[] for _ in range(battle_duration)]
@@ -488,12 +488,13 @@ print(germany.fire_events)
 print("* Creating a test battle *")
 test_battle = Battle("Test battle", germany, britain)
 print(test_battle.side_A_timeline)
+print(test_battle.side_B_timeline)
 
 # Test group fire
 print("FIRE TESTS")
 
-side_a = [british_one.hit_points]
-side_b = [german_one.hit_points]
+side_a_strength = [british_one.hit_points]
+side_b_strength = [german_one.hit_points]
 distance = 5000
 
 while british_one.status > 0 and german_one.status > 0:
@@ -501,11 +502,11 @@ while british_one.status > 0 and german_one.status > 0:
     german_one.fire(british_one, distance)
     british_one.update()
     german_one.update()
-    side_a.append(british_one.hit_points)
-    side_b.append(german_one.hit_points)
+    side_a_strength.append(british_one.hit_points)
+    side_b_strength.append(german_one.hit_points)
 
 print(british_one)
 print(sydney.hits_received)
 print(german_one)
 print(emden.hits_received)
-plot.strength_plot(side_a, british_one.name, side_b, german_one.name)
+plot.strength_plot(side_a_strength, british_one.name, side_b_strength, german_one.name)
