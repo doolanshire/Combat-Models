@@ -403,10 +403,16 @@ class Battle:
     which group from which side fires and when.
     """
 
-    def __init__(self, name, blue_side, red_side):
+    def __init__(self, name, side_A, side_B):
         self.name = name
-        self.blue_side = blue_side
-        self.red_side = red_side
+        self.side_A = side_A
+        self.side_B = side_B
+        # Determine the battle duration.
+        battle_duration = max(self.side_A.latest_event, self.side_B.latest_event)
+        # Initialise fire event timelines for both sides.
+        self.side_A_timeline = [[] for _ in range (battle_duration)]
+        self.side_B_timeline = [[] for _ in range (battle_duration)]
+
 
 
 def build_gun_dictionary(filename):
@@ -468,13 +474,16 @@ print(british_one)
 
 # Test side creation
 print("* Creating German side *")
-sideA = Side("Germany", [german_one, german_two])
-print(sideA)
+side_A = Side("Germany", [german_one, german_two])
+print(side_A)
+print("* Creating a British side *")
+side_B = Side("Britain", [british_one])
+print(side_B)
 
 # Test fire event registration
-sideA.register_fire_event(0, 0, 10000, 0, 12, None, 1)
-print(sideA.latest_event)
-print(sideA.fire_events)
+side_A.register_fire_event(0, 0, 10000, 0, 12, None, 1)
+print(side_A.latest_event)
+print(side_A.fire_events)
 
 # Test group fire
 print("FIRE TESTS")
