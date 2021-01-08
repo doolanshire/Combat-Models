@@ -440,6 +440,29 @@ class Battle:
                     # Add to each minute a tuple containing the firer, target, range, salvo size and fire modifier
                     self.side_b_timeline[minute].append((event[0], event[1], event[2], event[5], event[6]))
 
+    def advance_pulse(self):
+        """Advance the battle by a single one-minute pulse."""
+        # Check for side A fire events in this time pulse.
+        if len(self.side_a_timeline[self.time_pulse]) > 0:
+            # Play out the events by making groups fire at each other as instructed by the event's parameters.
+            # Start by iterating over the events.
+            for event in self.side_a_timeline[self.time_pulse]:
+                self.side_a.groups[event[0]].fire(self.side_b.groups[event[1]], event[2], event[3], event[4])
+        # Check for side B fire events in this time pulse.
+        if len(self.side_b_timeline[self.time_pulse]) > 0:
+            # Play out the events by making groups fire at each other as instructed by the event's parameters.
+            # Start by iterating over the events.
+            for event in self.side_b_timeline[self.time_pulse]:
+                self.side_b.groups[event[0]].fire(self.side_a.groups[event[1]], event[2], event[3], event[4])
+        # Update both sides.
+        self.side_a.update()
+        self.side_b.update()
+        # Add each side's strength at the end of the pulse to the corresponding lists for plotting.
+        self.a_plot.append(self.side_a.hit_points)
+        self.b_plot.append(self.side_b.hit_points)
+        # Advance the pulse counter by 1.
+        self.time_pulse += 1
+
 
 def build_gun_dictionary(filename):
     """Build a dictionary of gun parameters from an external CSV file:
@@ -482,10 +505,8 @@ secondary_guns = build_gun_dictionary("secondary_guns.csv")
 print("SHIP CREATION TESTS")
 emden = Ship("SMS Emden", "light cruiser", Gun(*destroyer_guns["4 in V"]), 10, 5)
 emden.main_armament_type.caliber = 4.1
-dresden = Ship("SMS Dresden", "light cruiser", Gun(*destroyer_guns["4 in V"]), 10, 5)
 print("* Ship information *")
 print(emden)
-print(dresden)
 sydney = Ship("HMAS Sydney", "light cruiser", Gun(*cruiser_guns["6 in XII"]), 8, 5)
 print(sydney)
 
@@ -493,47 +514,34 @@ print(sydney)
 print("GROUP CREATION TESTS")
 print("* Group information *")
 german_one = Group("SMS Emden", [emden])
-german_two = Group("SMS Dresden", [dresden])
 print(german_one)
 british_one = Group("HMAS Sydney", [sydney])
 print(british_one)
 
 # Test side creation
 print("* Creating German side *")
-germany = Side("Germany", [german_one, german_two])
+germany = Side("Germany", [german_one])
 print(germany)
 print("* Creating a British side *")
 britain = Side("Britain", [british_one])
 print(britain)
 
 # Test fire event registration
-germany.register_fire_event(0, 0, 10000, 0, 12, None, 1)
-print(germany.latest_event)
+# Both sides fire at 5000 yards for 12 minutes, then at 3000 yards for 8 minutes.
+germany.register_fire_event(0, 0, 5000, 0, 12, None, 1)
+britain.register_fire_event(0, 0, 5000, 0, 12, None, 1)
+germany.register_fire_event(0, 0, 3000, 12, 8, None, 1)
+britain.register_fire_event(0, 0, 3000, 12, 8, None, 1)
 print(germany.fire_events)
+print(britain.fire_events)
 
 # Test battle creation
 print("* Creating a test battle *")
-test_battle = Battle("Test battle", germany, britain)
-print(test_battle.side_a_timeline)
-print(test_battle.side_b_timeline)
+ross_island = Battle("Ross Island", germany, britain)
+print(ross_island.side_a_timeline)
+print(ross_island.side_b_timeline)
 
-# Test group fire
-print("FIRE TESTS")
+for i in range(21):
+    ross_island.advance_pulse()
 
-side_a_strength = [british_one.hit_points]
-side_b_strength = [german_one.hit_points]
-distance = 5000
-
-while british_one.status > 0 and german_one.status > 0:
-    british_one.fire(german_one, distance)
-    german_one.fire(british_one, distance)
-    british_one.update()
-    german_one.update()
-    side_a_strength.append(british_one.hit_points)
-    side_b_strength.append(german_one.hit_points)
-
-print(british_one)
-print(sydney.hits_received)
-print(german_one)
-print(emden.hits_received)
-plot.strength_plot(side_a_strength, british_one.name, side_b_strength, german_one.name)
+plot.strength_plot(ross_island.a_plot, "Germany", ross_island.b_plot, "Britain")
