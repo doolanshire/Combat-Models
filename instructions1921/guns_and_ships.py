@@ -410,8 +410,35 @@ class Battle:
         # Determine the battle duration.
         battle_duration = max(self.side_a.latest_event, self.side_b.latest_event)
         # Initialise fire event timelines for both sides.
-        self.side_A_timeline = [[] for _ in range(battle_duration)]
-        self.side_B_timeline = [[] for _ in range(battle_duration)]
+        self.side_a_timeline = [[] for _ in range(battle_duration)]
+        self.side_b_timeline = [[] for _ in range(battle_duration)]
+        # Initialise the strength plot for both sides.
+        self.a_plot = [self.side_a.staying_power]
+        self.b_plot = [self.side_b.staying_power]
+        # Set the current time pulse to 0.
+        self.time_pulse = 0
+
+        # Build the timelines for both sides from their event lists.
+
+        # Side A events.
+        # If any events exist...
+        if len(self.side_a.fire_events) > 0:
+            # Deal with each as follows:
+            for event in self.side_a.fire_events:
+                # Select the minutes of the timeline between the event's start and its end.
+                for minute in range(event[3], event[4]):
+                    # Add to each minute a tuple containing the firer, target, range, salvo size and fire modifier.
+                    self.side_a_timeline[minute].append((event[0], event[1], event[2], event[5], event[6]))
+
+        # Side B events.
+        # If any events exist...
+        if len(self.side_b.fire_events) > 0:
+            # Deal with each as follows:
+            for event in self.side_b.fire_events:
+                # Select the minutes of the timeline between the event's start and its end.
+                for minute in range(event[3], event[4]):
+                    # Add to each minute a tuple containing the firer, target, range, salvo size and fire modifier
+                    self.side_b_timeline[minute].append((event[0], event[1], event[2], event[5], event[6]))
 
 
 def build_gun_dictionary(filename):
@@ -487,8 +514,8 @@ print(germany.fire_events)
 # Test battle creation
 print("* Creating a test battle *")
 test_battle = Battle("Test battle", germany, britain)
-print(test_battle.side_A_timeline)
-print(test_battle.side_B_timeline)
+print(test_battle.side_a_timeline)
+print(test_battle.side_b_timeline)
 
 # Test group fire
 print("FIRE TESTS")
