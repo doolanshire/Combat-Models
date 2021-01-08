@@ -527,11 +527,13 @@ britain = Side("Britain", [british_one])
 print(britain)
 
 # Test fire event registration
-# Both sides fire at 5000 yards for 12 minutes, then at 3000 yards for 8 minutes.
-germany.register_fire_event(0, 0, 5000, 0, 12, None, 1)
-britain.register_fire_event(0, 0, 5000, 0, 12, None, 1)
-germany.register_fire_event(0, 0, 3000, 12, 8, None, 1)
-britain.register_fire_event(0, 0, 3000, 12, 8, None, 1)
+# Both sides fire at 9000 yards for 5 minutes, then at 8000 yards for 4 minutes, then 7000 for 8.
+germany.register_fire_event(0, 0, 9000, 0, 5, None, 1)
+britain.register_fire_event(0, 0, 9000, 0, 5, None, 1)
+germany.register_fire_event(0, 0, 8000, 5, 4, None, 1)
+britain.register_fire_event(0, 0, 8000, 5, 4, None, 1)
+germany.register_fire_event(0, 0, 7000, 9, 8, None, 1)
+britain.register_fire_event(0, 0, 7000, 9, 8, None, 1)
 print(germany.fire_events)
 print(britain.fire_events)
 
@@ -541,7 +543,7 @@ ross_island = Battle("Ross Island", germany, britain)
 print(ross_island.side_a_timeline)
 print(ross_island.side_b_timeline)
 
-for i in range(21):
+for i in range(18):
     ross_island.advance_pulse()
 
 plot.strength_plot(ross_island.a_plot, "Germany", ross_island.b_plot, "Britain")
