@@ -463,6 +463,12 @@ class Battle:
         # Advance the pulse counter by 1.
         self.time_pulse += 1
 
+    def resolve(self):
+        """Resolve the battle until there are no more events or one side is eliminated"""
+        while self.time_pulse < (len(self.side_a_timeline)) \
+                and self.side_a.hit_points > 0 and self.side_b.hit_points > 0:
+            self.advance_pulse()
+
 
 def build_gun_dictionary(filename):
     """Build a dictionary of gun parameters from an external CSV file:
@@ -527,13 +533,13 @@ britain = Side("Britain", [british_one])
 print(britain)
 
 # Test fire event registration
-# Both sides fire at 9000 yards for 5 minutes, then at 8000 yards for 4 minutes, then 7000 for 8.
+# Both sides fire at 9000 yards for 5 minutes, then at 8000 yards for 4 minutes, then 7000 for 12.
 germany.register_fire_event(0, 0, 9000, 0, 5, None, 1)
 britain.register_fire_event(0, 0, 9000, 0, 5, None, 1)
 germany.register_fire_event(0, 0, 8000, 5, 4, None, 1)
 britain.register_fire_event(0, 0, 8000, 5, 4, None, 1)
-germany.register_fire_event(0, 0, 7000, 9, 8, None, 1)
-britain.register_fire_event(0, 0, 7000, 9, 8, None, 1)
+germany.register_fire_event(0, 0, 7000, 9, 12, None, 1)
+britain.register_fire_event(0, 0, 7000, 9, 12, None, 1)
 print(germany.fire_events)
 print(britain.fire_events)
 
@@ -543,7 +549,6 @@ ross_island = Battle("Ross Island", germany, britain)
 print(ross_island.side_a_timeline)
 print(ross_island.side_b_timeline)
 
-for i in range(18):
-    ross_island.advance_pulse()
+ross_island.resolve()
 
 plot.strength_plot(ross_island.a_plot, "Germany", ross_island.b_plot, "Britain")
