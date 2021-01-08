@@ -410,9 +410,8 @@ class Battle:
         # Determine the battle duration.
         battle_duration = max(self.side_A.latest_event, self.side_B.latest_event)
         # Initialise fire event timelines for both sides.
-        self.side_A_timeline = [[] for _ in range (battle_duration)]
-        self.side_B_timeline = [[] for _ in range (battle_duration)]
-
+        self.side_A_timeline = [[] for _ in range(battle_duration)]
+        self.side_B_timeline = [[] for _ in range(battle_duration)]
 
 
 def build_gun_dictionary(filename):
@@ -474,16 +473,21 @@ print(british_one)
 
 # Test side creation
 print("* Creating German side *")
-side_A = Side("Germany", [german_one, german_two])
-print(side_A)
+germany = Side("Germany", [german_one, german_two])
+print(germany)
 print("* Creating a British side *")
-side_B = Side("Britain", [british_one])
-print(side_B)
+britain = Side("Britain", [british_one])
+print(britain)
 
 # Test fire event registration
-side_A.register_fire_event(0, 0, 10000, 0, 12, None, 1)
-print(side_A.latest_event)
-print(side_A.fire_events)
+germany.register_fire_event(0, 0, 10000, 0, 12, None, 1)
+print(germany.latest_event)
+print(germany.fire_events)
+
+# Test battle creation
+print("* Creating a test battle *")
+test_battle = Battle("Test battle", germany, britain)
+print(test_battle.side_A_timeline)
 
 # Test group fire
 print("FIRE TESTS")
