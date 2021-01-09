@@ -587,7 +587,7 @@ secondary_guns = build_gun_dictionary("secondary_guns.csv")
 
 # CREATE TEST SHIPS
 print("SHIP CREATION TESTS")
-emden = Ship("SMS Emden", "light cruiser", Gun(*destroyer_guns["4 in V"]), 10, 5)
+emden = Ship("SMS Emden", "light cruiser", Gun(*secondary_guns["4 in IX"]), 10, 5)
 emden.main_armament_type.caliber = 4.1
 print("* Ship information *")
 print(emden)
@@ -611,22 +611,45 @@ britain = Side("Britain", [british_one])
 print(britain)
 
 # Test fire event registration
-# Both sides fire at 9000 yards for 5 minutes, then at 8000 yards for 4 minutes, then 7000 for 12.
-germany.register_fire_event(0, 0, 9000, 0, 5, None, 1)
-britain.register_fire_event(0, 0, 9000, 0, 5, None, 1)
-germany.register_fire_event(0, 0, 8000, 5, 4, None, 1)
-britain.register_fire_event(0, 0, 8000, 5, 4, None, 1)
-germany.register_fire_event(0, 0, 7000, 9, 12, None, 1)
-britain.register_fire_event(0, 0, 7000, 9, 12, None, 1)
+# Minute 0, track point 1
+germany.register_fire_event(0, 0, 10500, 0, 5, None, 1)
+# Minute 5, track point 2
+germany.register_fire_event(0, 0, 8100, 5, 5, None, 1)
+# Minute 10, track point 3
+germany.register_fire_event(0, 0, 10000, 10, 5, None, 1)
+# Minute 15, track point 4
+germany.register_fire_event(0, 0, 8000, 15, 5, None, 1)
+# Minute 20, track point 5
+
+germany.register_fire_event(0, 0, 9500, 20, 5, None, 1)
+britain.register_fire_event(0, 0, 9500, 20, 5, None, 1)
+# Minute 25, track point 6
+germany.register_fire_event(0, 0, 7000, 25, 5, None, 1)
+britain.register_fire_event(0, 0, 7000, 25, 5, None, 1)
+# Minute 30, track point 7
+germany.register_fire_event(0, 0, 5500, 30, 5, None, 1)
+britain.register_fire_event(0, 0, 5500, 30, 5, None, 1)
+# Minute 35, track point 8
+# Emden obscured by smoke
+# Minute 40, track point 9
+germany.register_fire_event(0, 0, 9500, 40, 5, None, 1)
+britain.register_fire_event(0, 0, 9500, 40, 5, None, 1)
+# Minute 45, track point 10
+germany.register_fire_event(0, 0, 7000, 45, 5, None, 1)
+britain.register_fire_event(0, 0, 7000, 45, 5, None, 1)
+
+
 print(germany.fire_events)
 print(britain.fire_events)
 
 # Test battle creation
 print("* Creating a test battle *")
-ross_island = Battle("Ross Island", germany, britain)
-print(ross_island.side_a_timeline)
-print(ross_island.side_b_timeline)
+cocos = Battle("Keeling Islands", germany, britain)
+print(cocos.side_a_timeline)
+print(cocos.side_b_timeline)
 
-ross_island.resolve()
+cocos.resolve()
+print(emden.hits_received)
+print(sydney.hits_received)
 
-plot.strength_plot(ross_island.a_plot, "Germany", ross_island.b_plot, "Britain")
+plot.strength_plot(cocos.a_plot, "Germany", cocos.b_plot, "Britain")
