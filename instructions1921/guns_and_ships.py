@@ -16,7 +16,14 @@ class Gun:
         - effective_to_hit: chance to hit per gun per minute at effective range.
         - effective_min: minimum range in yards considered to be effective.
         - short_to_hit: chance to hit per gun per minute at short range.
-        - active: whether the gun is active (True) or Out Of Action (False). All guns are initialised as active.
+
+    Methods:
+        - return_to_hit(target_range): returns the base number of hits per gun per minute at the range provided.
+        - return_damage_conversion_factor(): the 1921 Royal Navy rules convert all hits to two standard calibres:
+        6-inch hits for light ships, and 15-inch hits for battlecruisers and battleships. This method returns the factor
+        needed to convert a gun's hits to the equivalent 6-inch or 15-inch hits
+        - return_equivalent_damage(target_range): returns the return_to_hit() number multiplied by the conversion
+        factor. Essentially combines the two methods above into one.
     """
 
     def __init__(self, name, mount, caliber, max_range, long_to_hit, long_min, effective_to_hit, effective_min,
@@ -46,7 +53,9 @@ class Gun:
             raise ValueError("Range must be a positive integer")
 
     def return_damage_conversion_factor(self):
-        """Return the conversion factor of a caliber to 6-inch hits (light guns) or 15-inch hits (heavy guns)"""
+        """The 1921 Royal Navy rules convert all hits to an equivalent number of 6-inch hits (light guns) or 15-inch
+        hits (heavy guns). This function returns the factor needed for the conversion.
+        """
         # Conversion factor to 6-inch hits for light gun calibers
         if self.caliber <= 9.5:
             # The conversion factors below are as stated in the original 1921 rules
@@ -81,14 +90,6 @@ class Gun:
         equivalent_damage = self.return_to_hit(target_range) * self.return_damage_conversion_factor()
         return equivalent_damage
 
-    def is_active(self):
-        """Return True if the gun is active, False if it is Out Of Action."""
-        return self.active
-
-    def knock_out(self):
-        """Knock the gun out (make it inactive). Caused by enemy fire."""
-        self.active = False
-
 
 class Ship:
     """
@@ -111,6 +112,23 @@ class Ship:
         - status: 1 means undamaged, 0 means out of action / firepower kill (float).
         - hits_received: a record of hits received by caliber until becoming a firepower kill (dictionary).
             * Hits received are saved as a float in case the decimal part (partial hits) is needed for analysis.
+
+    Methods:
+        - fire(target, target_range, distribution=1, salvo_size, modifier): fires at a target ship. Calculates the
+        number of (normalised) hits in one minute at a given range. Can be modified by three factors:
+            * Distribution: fraction of hits actually applied to that specific ship. This is used when dividing fire
+            among many targets.
+            * Salvo size: number of guns bearing. Used to reflect circumstances in which the firing ship might not
+            be broadside-on.
+            * Modifier: an arbitrary modifier used to reflect any other factors not considered in the simulation.
+        - damage(points): apply a number of damage points to the ship. These damage points are expressed in 6-inch hits
+        (light division) or 15-inch hits (battlecruisers and battleships). Damage does not affect the ship's firepower
+        until applied by use of the ship's update() method.
+        - record_hits(caliber, hits): record the number of hits of a given caliber taken by the ship. This record is
+        kept in the hits_received{} dictionary. It has no effect in the simulation. The method exists for analytical
+        purposes only.
+        - update(): applies all pending damage to the ship and refreshes its status. Applied damage affects the ship's
+        offensive capabilities.
     """
 
     def __init__(self, name, hull_class, main_armament_type, main_armament_count, main_armament_broadside):
@@ -235,7 +253,9 @@ class Ship:
                 target.damage(hits * self.main_armament_type.return_damage_conversion_factor())
 
     def damage(self, damage_points):
-        """ Damages the ship by a given number of points (6-inch or 15-inch hit equivalents)
+        """ Damages the ship by a given number of points. One point is either a 6-inch (light division ships) or 15-inch
+         (battlecruisers and battleships) hit equivalent. This damage is not applied (does not affect a ship's status
+         and hence firepower) until the update() function is run.
 
         Arguments:
             - damage_points: the number of damage points to inflict on the target's HP pool, normalised to
@@ -245,7 +265,7 @@ class Ship:
         self.hit_points -= min(damage_points, self.hit_points)
 
     def record_hits(self, caliber, hits):
-        """Record a number of hits by a gun of a given caliber in the 'hits_received' dictionary"""
+        """Record a number of hits by a gun of a given caliber in the 'hits_received' dictionary."""
         # Record hits only if the ship is not already knocked out
         if self.hit_points > 0:
             # If the ship has already received hits of the caliber given, add to the existing record
@@ -256,7 +276,7 @@ class Ship:
                 self.hits_received[caliber] = hits
 
     def update(self):
-        """ Applies damage. Sets starting_hit_points to the current value and updates status"""
+        """ Applies pending damage. Sets starting_hit_points to the current value and updates status."""
         self.starting_hit_points = self.hit_points
         self.status = self.hit_points / self.staying_power
 
@@ -271,8 +291,7 @@ class Ship:
 
 
 class Group:
-    """
-    A group of ships, consisting of one ship or more. All ships in the simulation must belong to a group,
+    """A group of ships, consisting of one ship or more. All ships in the simulation must belong to a group,
     even if they are the group's sole member. Groups behave according to the following rules:
 
     - Groups outnumbering their target group fire with a penalty to their accuracy as defined in the 1921 rules.
@@ -287,9 +306,20 @@ class Group:
     Attributes:
         - name: the name of the group (string).
         - members: a list of ships belonging to the group (list).
-        - staying_power: the sum total of the staying power of all members
+        - staying_power: the sum total of the staying power of all members (float)
         - starting_hit_points: the sum total of the remaining hit points of all members at the beginning of a time pulse
-        - hit_points: the sum total of the remaining hit points of all members at any given time
+        (float). This number is updated at the end of every pulse.
+        - hit_points: the sum total of the remaining hit points of all members at any given time (float).
+        - status: a fraction indicating the level of damage received by a ship. A value of 1 means the ship is intact,
+        while a value of 0 means it is out of action (fraction).
+
+    Methods:
+        - add_ship(ship): add a ship to the group. Groups are normally initialised with members, but should one need
+        to incorporate another ship mid-battle this would be the way to do it.
+        - fire(target_group, target_range, salvo_size, modifier): fire at another group. Makes each individual ship
+        in the firing group use its fire() method and distributes damage among all the ships in the target group,
+        proportional to their remaining hit points. See the Ship class fire() method for more information.
+        - update(): applies pending damage to all ships in the group, and refreshes the group's status.
     """
 
     def __init__(self, name, members):
@@ -311,7 +341,10 @@ class Group:
         self.status = self.hit_points / self.staying_power
 
     def fire(self, target_group, target_range, salvo_size=None, modifier=1):
-        """Fire at the target group at the specified range.
+        """Fire at the target group at the specified range. When the target group consists of more than one ship,
+        damage is treated as aggregated: first, the program determines the percentage of the target group's total
+        hit points that would be damaged by the salvo. Then, each individual ship in the group is damaged by this
+        same percentage.
 
         Arguments:
             - target_group: the enemy group to fire at (Group object).
@@ -322,6 +355,7 @@ class Group:
             This argument is used to introduce variables not explicitly reflected in the 1921 rules and left instead
             to the discretion of the umpire, such as visibility, crew training, fire direction differences, etc.
         """
+
         if target_group.hit_points > 0:
             fire_distribution = [ship.starting_hit_points / target_group.hit_points
                                  for ship in target_group.members]
@@ -347,7 +381,28 @@ class Group:
 
 
 class Side:
-    """One of two opposing sides in a battle, formed by one or more groups."""
+    """One of two opposing sides in a battle, formed by one or more groups.
+
+    Attributes:
+        - name: the group's name (string).
+        - groups: the ship groups belonging to the side (list).
+        - staying_power: the total staying power of all the ships in all groups (float).
+        - hit_points: the remaining hit points of all the ships in all groups (float).
+        - status: the fraction of remaining hit points for the whole side. A value of 1 means the side is intact, while
+        a value of 0 means it is out of action (fraction).
+        - fire_events: all the fire events the side is going to carry out in a battle. A fire event is a tuple
+        containing a description of a moment in which a group opens fire against another. It is defined by the firing
+        group, the target group, the moment it starts, its duration, and the general effectiveness (determined by the
+        salvo size and an arbitrary modifier) (list).
+        - latest_event: the last minute, counted from the beginning of the battle, during which any fire events of the
+        side are taking place. Used in determining the overall duration of the battle (integer).
+
+    Methods:
+        - update(): applies any pending damage to all the groups in the side, and refreshes the side's overall status.
+        - register_fire_event(firer, target, target_range, start, duration, salvo_size, modifier): adds a fire event
+        with all the specified parameters to the side's fire event list. This method is used to populate a battle's
+        timeline and specify which groups fire upon which groups, when and how.
+    """
 
     def __init__(self, name, groups):
         self.name = name
@@ -401,6 +456,29 @@ class Side:
 class Battle:
     """A battle between two opposing sides. This class contains the data structures and methods needed to dictate
     which group from which side fires and when.
+
+    Attributes:
+        - name: the name of the battle (string).
+        - side_a: one of the two sides involved in the battle (Side).
+        - side_b: the other side involved in the battle (Side).
+        - side_a_timeline: a list of length equal to the number of minutes of battle duration. For each minute, the
+        list may contain one or more tuples indicating all the fire events for side A (list).
+        - side_b_timeline: same as above, but for side B (list).
+        These two timelines are populated automatically upon initialization of a Battle instance, from the fire event
+        lists of the sides involved.
+        - a_plot: a list containing the total hit points of side A at each minute of the action, so that a graph can
+        be plotted at the end of the battle (list).
+        - b_plot: same as above, but for side B (list).
+        - time_pulse: the current minute of the battle. Begins at 0 and is advanced by 1 every time the advance_pulse()
+        method is called (integer).
+
+    Methods:
+        - advance_pulse(): advances the battle by one minute. This method executes all the fire events pending for the
+        current minute, assigning damage to both sides. At the end of the time pulse all pending damage is applied, the
+        lists a_plot and b_plot are updated, and the status of all ships in both sides is refreshed. The variable
+        time_pulse is also increased by one.
+        - resolve(): automatically resolves the entire battle, pulse by pulse, until either side is out of action or
+        all fire events have been executed.
     """
 
     def __init__(self, name, side_a, side_b):
