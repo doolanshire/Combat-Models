@@ -653,3 +653,4 @@ print(emden.hits_received)
 print(sydney.hits_received)
 
 plot.strength_plot(cocos)
+plot.firepower_comparison(german_one, british_one)
