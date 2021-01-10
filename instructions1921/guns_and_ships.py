@@ -652,4 +652,4 @@ cocos.resolve()
 print(emden.hits_received)
 print(sydney.hits_received)
 
-plot.strength_plot(cocos.a_plot, "Germany", cocos.b_plot, "Britain")
+plot.strength_plot(cocos)
