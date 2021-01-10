@@ -644,7 +644,7 @@ print(britain.fire_events)
 
 # Test battle creation
 print("* Creating a test battle *")
-cocos = Battle("Keeling Islands", germany, britain)
+cocos = Battle("Keeling Islands 1914 (Sydney vs. Emden)", germany, britain)
 print(cocos.side_a_timeline)
 print(cocos.side_b_timeline)
 

@@ -12,4 +12,5 @@ def strength_plot(battle):
     blue = sns.lineplot(data=battle.a_plot, label=battle.side_a.name)
     red = sns.lineplot(data=battle.b_plot, label=battle.side_b.name)
     blue.set(xlabel="Time", ylabel="Staying power (6-inch hits)")
+    plt.title(battle.name)
     plt.show()
