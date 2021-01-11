@@ -1,5 +1,5 @@
 import csv
-from math import e
+from math import log
 import plot
 
 
@@ -68,9 +68,9 @@ class Gun:
             elif self.caliber == 7.5:
                 damage_equivalent = 3
             # All other light calibers are determined through interpolation
-            # We used exponential regression (R squared value of 0.9941)
+            # We used power regression (R squared value of 0.9751)
             else:
-                damage_equivalent = 1 / (37.523 * (e**(-0.622 * self.caliber)))
+                damage_equivalent = 0.0025 * (self.caliber**3.4419)
         # Conversion factor to 15-inch hits for heavy gun calibers
         elif self.caliber > 9.5:
             # Here we just use an equation for all cases because damage for big guns scales linearly
