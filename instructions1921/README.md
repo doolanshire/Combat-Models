@@ -21,6 +21,8 @@ Engagement information will eventually be stored in external CSV files so that d
 
 **plot.py**: a simple function to plot attrition over time.
 
+**interpolate.py**: this is the script used to create the *interpolated* versions of the gun data tables below. It is not needed to simulate battles, but it is useful in creating gun data table entries.
+
 #### Data files:
 
 **capital\_ship\_guns.csv**: containing information on capital ship guns (16 in, 15 in I, 13.5 in V, and 12 in XI).
@@ -30,6 +32,8 @@ Engagement information will eventually be stored in external CSV files so that d
 **destroyer\_guns.csv**: containing information on light cruiser guns (4.7 in I and 4 in V).
 
 **secondary\_guns.csv**: containing information on secondary guns (6 in XII, 6 in VII, 5.5 in, 4 in IX, 4 in VII).
+
+The *interpolated* versions of each data file have two additional columns. These columns contain the terms needed for each gun to calculate hit chances at arbitrary ranges using a logarithmic regression model.
 
 ## To do
 * Fix the *salvo size* parameter to represent the ratio of guns firing rather than an absolute number. The latter does
