@@ -17,7 +17,7 @@ Engagement information will eventually be stored in external CSV files so that d
 
 #### Program files:
 
-**guns\_and\_ships.py**: implements the _Gun_, _Ship_ and _Group_ classes and the necessary methods.
+**guns\_and\_ships.py**: implements the _Gun_, _Ship_, _Group_, _Side_ and _Battle_ classes and their associated methods.
 
 **plot.py**: a simple function to plot attrition over time.
 
@@ -40,4 +40,4 @@ The *interpolated* versions of each data file have two additional columns. These
   not make a lot of sense when handling groups of different ship classes.
 * Implement functions to read and parse ship data from external files.
 * Design and implement engagement input files – essentially order of battle and fire events for each side.
-* Add an option to define hit rates using an interpolation function rather than tabular data.
+* Add an option to define hit rates using an interpolation function (with the terms calculated through *interpolate.py*) rather than tabular data.
