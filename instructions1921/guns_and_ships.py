@@ -574,16 +574,16 @@ def build_gun_dictionary(filename):
 
 
 # Build the gun dictionary for capital ships
-capital_guns = build_gun_dictionary("capital_ship_guns.csv")
+capital_guns = build_gun_dictionary("gun_data/capital_ship_guns.csv")
 
 # Build the gun dictionary for cruisers
-cruiser_guns = build_gun_dictionary("light_cruiser_guns.csv")
+cruiser_guns = build_gun_dictionary("gun_data/light_cruiser_guns.csv")
 
 # Build the gun dictionary for destroyers
-destroyer_guns = build_gun_dictionary("destroyer_guns.csv")
+destroyer_guns = build_gun_dictionary("gun_data/destroyer_guns.csv")
 
 # Build the gun dictionary for destroyers
-secondary_guns = build_gun_dictionary("secondary_guns.csv")
+secondary_guns = build_gun_dictionary("gun_data/secondary_guns.csv")
 
 # CREATE TEST SHIPS
 print("SHIP CREATION TESTS")

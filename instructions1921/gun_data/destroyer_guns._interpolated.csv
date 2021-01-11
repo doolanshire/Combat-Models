@@ -1,0 +1,3 @@
+designation,type,caliber,max_range,long_to_hit,long_min,effective_to_hit,effective_min,short_to_hit,first_regression_term,second_regression_term
+4.7 in I,destroyer,4.7,16000,0.033,10000,0.1,7000,0.267,-0.179835881908897,1.732736378896147
+4 in V,destroyer,4.0,13700,0.042,9000,0.125,6000,0.33299999999999996,-0.22007060349449079,2.093458075708817
