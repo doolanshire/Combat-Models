@@ -16,6 +16,10 @@ class Gun:
         - effective_to_hit: chance to hit per gun per minute at effective range.
         - effective_min: minimum range in yards considered to be effective.
         - short_to_hit: chance to hit per gun per minute at short range.
+        - first_regression_term: first term of the logarithmic regression equation to calculate hits per minute at an
+        arbitrary range.
+        - second_regression_term: second term of the logarithmic regression equation to calculate hits per minute at
+        an arbitrary range.
 
     Methods:
         - return_to_hit(target_range): returns the base number of hits per gun per minute at the range provided.
@@ -27,7 +31,7 @@ class Gun:
     """
 
     def __init__(self, name, mount, caliber, max_range, long_to_hit, long_min, effective_to_hit, effective_min,
-                 short_to_hit):
+                 short_to_hit, first_regression_term, second_regression_term):
         self.name = name
         self.mount = mount
         self.caliber = max(0, caliber)
@@ -37,7 +41,8 @@ class Gun:
         self.effective_to_hit = effective_to_hit
         self.effective_min = effective_min
         self.short_to_hit = short_to_hit
-        self.active = True
+        self.first_regression_term = first_regression_term
+        self.second_regression_term = second_regression_term
 
     def return_to_hit(self, target_range):
         """Return the chance to hit (per gun and minute) for a given range. If the target is out of range, return 0."""
@@ -574,16 +579,16 @@ def build_gun_dictionary(filename):
 
 
 # Build the gun dictionary for capital ships
-capital_guns = build_gun_dictionary("gun_data/capital_ship_guns.csv")
+capital_guns = build_gun_dictionary("gun_data/capital_ship_guns._interpolated.csv")
 
 # Build the gun dictionary for cruisers
-cruiser_guns = build_gun_dictionary("gun_data/light_cruiser_guns.csv")
+cruiser_guns = build_gun_dictionary("gun_data/light_cruiser_guns._interpolated.csv")
 
 # Build the gun dictionary for destroyers
-destroyer_guns = build_gun_dictionary("gun_data/destroyer_guns.csv")
+destroyer_guns = build_gun_dictionary("gun_data/destroyer_guns._interpolated.csv")
 
 # Build the gun dictionary for destroyers
-secondary_guns = build_gun_dictionary("gun_data/secondary_guns.csv")
+secondary_guns = build_gun_dictionary("gun_data/secondary_guns._interpolated.csv")
 
 # CREATE TEST SHIPS
 print("SHIP CREATION TESTS")
