@@ -9,7 +9,7 @@ A Python implementation of the *Instructions for Tactical and Strategical Exerci
 
 The aim of this project is implementing the fire and damage rules of the Tactical Exercise, in order to estimate attrition in historical battles.
 
-Movement is not simulated directly – instead, the user introduces the firing intervals and targets for each ship group and the distances between them throughout a battle. The program then computes the exchange of fire accordingly.
+Movement is not simulated directly – instead, the user introduces the firing intervals and targets for each ship group and the distances between them throughout a battle. The program then computes the exchange of fire accordingly.
 
 Engagement information will eventually be stored in external CSV files so that different battles may be played with little effort.
 
@@ -17,7 +17,7 @@ Engagement information will eventually be stored in external CSV files so that d
 
 #### Program files:
 
-**guns\_and\_ships.py**: implements the _Gun_, _Ship_, _Group_, _Side_ and _Battle_ classes and their associated methods.
+**guns\_and\_ships.py**: implements the _Gun_, _Ship_, _Group_, _Side_ and _Battle_ classes, and their associated methods.
 
 **plot.py**: a simple function to plot attrition over time.
 
@@ -33,11 +33,10 @@ Engagement information will eventually be stored in external CSV files so that d
 
 **secondary\_guns.csv**: containing information on secondary guns (6 in XII, 6 in VII, 5.5 in, 4 in IX, 4 in VII).
 
-The *interpolated* versions of each data file have two additional columns. These columns contain the terms needed for each gun to calculate hit chances at arbitrary ranges using a logarithmic regression model.
+The *interpolated* versions of each data file have three additional columns. These columns contain the terms needed for each gun to calculate hit chances at arbitrary ranges using a polynomial regression model.
 
 ## To do
 * Fix the *salvo size* parameter to represent the ratio of guns firing rather than an absolute number. The latter does
   not make a lot of sense when handling groups of different ship classes.
 * Implement functions to read and parse ship data from external files.
 * Design and implement engagement input files – essentially order of battle and fire events for each side.
-* Add an option to define hit rates using an interpolation function (with the terms calculated through *interpolate.py*) rather than tabular data.
