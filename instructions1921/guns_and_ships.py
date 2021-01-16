@@ -1,6 +1,8 @@
 import csv
-from math import log
 import plot
+
+# This flag is temporary, and will be implemented in an external config file.
+INTERPOLATE = True
 
 
 class Gun:
@@ -16,9 +18,11 @@ class Gun:
         - effective_to_hit: chance to hit per gun per minute at effective range.
         - effective_min: minimum range in yards considered to be effective.
         - short_to_hit: chance to hit per gun per minute at short range.
-        - first_regression_term: first term of the logarithmic regression equation to calculate hits per minute at an
+        - first_regression_term: first term of the polynomial regression equation to calculate hits per minute at an
         arbitrary range.
-        - second_regression_term: second term of the logarithmic regression equation to calculate hits per minute at
+        - second_regression_term: second term of the polynomial regression equation to calculate hits per minute at
+        an arbitrary range.
+        - third_regression_term: third term of the polynomial regression equation to calculate hits per minute at
         an arbitrary range.
 
     Methods:
@@ -31,7 +35,7 @@ class Gun:
     """
 
     def __init__(self, name, mount, caliber, max_range, long_to_hit, long_min, effective_to_hit, effective_min,
-                 short_to_hit, first_regression_term, second_regression_term):
+                 short_to_hit, first_regression_term, second_regression_term, third_regression_term):
         self.name = name
         self.mount = mount
         self.caliber = max(0, caliber)
@@ -43,19 +47,25 @@ class Gun:
         self.short_to_hit = short_to_hit
         self.first_regression_term = first_regression_term
         self.second_regression_term = second_regression_term
+        self.third_regression_term = third_regression_term
 
-    def return_to_hit(self, target_range):
+    def return_to_hit(self, target_range, interpolate=INTERPOLATE):
         """Return the chance to hit (per gun and minute) for a given range. If the target is out of range, return 0."""
-        if target_range > self.max_range:
+        if target_range > self.max_range or target_range < 0:
             return 0
-        elif target_range > self.long_min:
-            return self.long_to_hit
-        elif target_range > self.effective_min:
-            return self.effective_to_hit
-        elif target_range >= 0:
-            return self.short_to_hit
         else:
-            raise ValueError("Range must be a positive integer")
+            if interpolate:
+                base_hits_per_minute = self.first_regression_term * target_range ** 2\
+                                       + self.second_regression_term * target_range \
+                                       + self.third_regression_term
+                return max(base_hits_per_minute, 0)
+            elif not interpolate:
+                if target_range > self.long_min:
+                    return self.long_to_hit
+                elif target_range > self.effective_min:
+                    return self.effective_to_hit
+                elif target_range >= 0:
+                    return self.short_to_hit
 
     def return_damage_conversion_factor(self):
         """The 1921 Royal Navy rules convert all hits to an equivalent number of 6-inch hits (light guns) or 15-inch
