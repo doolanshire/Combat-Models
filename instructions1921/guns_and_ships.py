@@ -371,6 +371,20 @@ class Group:
             to the discretion of the umpire, such as visibility, crew training, fire direction differences, etc.
         """
 
+        # If the firing group is larger than the target group, reduce accuracy to reflect the shell splashes from
+        # different ships getting mixed up and making corrections difficult.
+        if len(self.members) > len(target_group.members):
+            # Calculate the ratio by which the firing side is superior
+            superiority_ratio = len(self.members) / len(target_group.members)
+            # The rules give a (lower) equivalent number of firing ships, calculated with the following equation
+            equivalent_superiority = (superiority_ratio / 2) + 1
+            # Divide this by the actual superiority ratio to get a conversion factor
+            concentration_multiplier = equivalent_superiority / superiority_ratio
+            # Change the general modifier by the resulting factor
+            modifier *= concentration_multiplier
+            print(modifier)
+
+        # Distribute fire among the target group's ships proportionally to their remaining hit points.
         if target_group.hit_points > 0:
             fire_distribution = [ship.starting_hit_points / target_group.hit_points
                                  for ship in target_group.members]
