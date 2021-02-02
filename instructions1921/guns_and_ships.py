@@ -1,5 +1,6 @@
 import csv
 import plot
+import pandas as pd
 
 # This flag is temporary, and will be implemented in an external config file.
 INTERPOLATE = True
@@ -55,7 +56,7 @@ class Gun:
             return 0
         else:
             if interpolate:
-                base_hits_per_minute = self.first_regression_term * target_range ** 2\
+                base_hits_per_minute = self.first_regression_term * target_range ** 2 \
                                        + self.second_regression_term * target_range \
                                        + self.third_regression_term
                 return max(base_hits_per_minute, 0)
@@ -75,9 +76,9 @@ class Gun:
         if self.caliber <= 9.5:
             # The conversion factors below are as stated in the original 1921 rules
             if self.caliber == 4:
-                damage_equivalent = 1/3
+                damage_equivalent = 1 / 3
             elif self.caliber == 4.7:
-                damage_equivalent = 1/2
+                damage_equivalent = 1 / 2
             elif self.caliber == 6:
                 damage_equivalent = 1
             elif self.caliber == 7.5:
@@ -85,7 +86,7 @@ class Gun:
             # All other light calibers are determined through interpolation
             # We used power regression (R squared value of 0.9751)
             else:
-                damage_equivalent = 0.0025 * (self.caliber**3.4419)
+                damage_equivalent = 0.0025 * (self.caliber ** 3.4419)
         # Conversion factor to 15-inch hits for heavy gun calibers
         elif self.caliber > 9.5:
             # Here we just use an equation for all cases because damage for big guns scales linearly
@@ -495,17 +496,17 @@ class Battle:
         - side_b_timeline: same as above, but for side B (list).
         These two timelines are populated automatically upon initialization of a Battle instance, from the fire event
         lists of the sides involved.
-        - a_plot: a list containing the total hit points of side A at each minute of the action, so that a graph can
-        be plotted at the end of the battle (list).
-        - b_plot: same as above, but for side B (list).
+        - side_a_staying_power: a list containing the total hit points of side A at each minute of the action, so that a
+         graph can be plotted at the end of the battle (list).
+        - side_b_staying_power: same as above, but for side B (list).
         - time_pulse: the current minute of the battle. Begins at 0 and is advanced by 1 every time the advance_pulse()
         method is called (integer).
 
     Methods:
         - advance_pulse(): advances the battle by one minute. This method executes all the fire events pending for the
         current minute, assigning damage to both sides. At the end of the time pulse all pending damage is applied, the
-        lists a_plot and b_plot are updated, and the status of all ships in both sides is refreshed. The variable
-        time_pulse is also increased by one.
+        lists side_a_staying_power and side_b_staying_power are updated, and the status of all ships in both sides is
+        refreshed. The variable time_pulse is also increased by one.
         - resolve(): automatically resolves the entire battle, pulse by pulse, until either side is out of action or
         all fire events have been executed.
     """
@@ -520,8 +521,8 @@ class Battle:
         self.side_a_timeline = [[] for _ in range(battle_duration)]
         self.side_b_timeline = [[] for _ in range(battle_duration)]
         # Initialise the strength plot for both sides.
-        self.a_plot = [self.side_a.staying_power]
-        self.b_plot = [self.side_b.staying_power]
+        self.side_a_staying_power = [self.side_a.staying_power]
+        self.side_b_staying_power = [self.side_b.staying_power]
         # Set the current time pulse to 0.
         self.time_pulse = 0
 
@@ -565,8 +566,8 @@ class Battle:
         self.side_a.update()
         self.side_b.update()
         # Add each side's strength at the end of the pulse to the corresponding lists for plotting.
-        self.a_plot.append(self.side_a.hit_points)
-        self.b_plot.append(self.side_b.hit_points)
+        self.side_a_staying_power.append(self.side_a.hit_points)
+        self.side_b_staying_power.append(self.side_b.hit_points)
         # Advance the pulse counter by 1.
         self.time_pulse += 1
 
@@ -575,6 +576,12 @@ class Battle:
         while self.time_pulse < (len(self.side_a_timeline)) \
                 and self.side_a.hit_points > 0 and self.side_b.hit_points > 0:
             self.advance_pulse()
+        # Join all the battle information into Pandas dataframes.
+        battle_data = pd.DataFrame(
+            {"a_staying_power": self.side_a_staying_power,
+             "b_staying_power": self.side_b_staying_power
+             })
+        return battle_data
 
 
 def build_gun_dictionary(filename):
@@ -667,7 +674,6 @@ britain.register_fire_event(0, 0, 9500, 40, 5, None, 1)
 germany.register_fire_event(0, 0, 7000, 45, 5, None, 1)
 britain.register_fire_event(0, 0, 7000, 45, 5, None, 1)
 
-
 print(germany.fire_events)
 print(britain.fire_events)
 
@@ -677,7 +683,9 @@ cocos = Battle("Keeling Islands 1914 (Sydney vs. Emden)", germany, britain)
 print(cocos.side_a_timeline)
 print(cocos.side_b_timeline)
 
-cocos.resolve()
+cocos_data = cocos.resolve()
+print(cocos_data)
+
 print(emden.hits_received)
 print(sydney.hits_received)
 
