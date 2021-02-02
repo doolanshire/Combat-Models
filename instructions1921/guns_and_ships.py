@@ -525,6 +525,8 @@ class Battle:
         self.side_b_staying_power = [self.side_b.staying_power]
         # Set the current time pulse to 0.
         self.time_pulse = 0
+        # The battle_data attribute gets assigned a Pandas dataframe once the battle is resolved.
+        self.battle_data = None
 
         # Build the timelines for both sides from their event lists.
 
@@ -577,11 +579,10 @@ class Battle:
                 and self.side_a.hit_points > 0 and self.side_b.hit_points > 0:
             self.advance_pulse()
         # Join all the battle information into Pandas dataframes.
-        battle_data = pd.DataFrame(
+        self.battle_data = pd.DataFrame(
             {"a_staying_power": self.side_a_staying_power,
              "b_staying_power": self.side_b_staying_power
              })
-        return battle_data
 
 
 def build_gun_dictionary(filename):
@@ -683,8 +684,8 @@ cocos = Battle("Keeling Islands 1914 (Sydney vs. Emden)", germany, britain)
 print(cocos.side_a_timeline)
 print(cocos.side_b_timeline)
 
-cocos_data = cocos.resolve()
-print(cocos_data)
+cocos.resolve()
+print(cocos.battle_data)
 
 print(emden.hits_received)
 print(sydney.hits_received)
