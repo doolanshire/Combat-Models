@@ -520,7 +520,7 @@ class Battle:
         # Initialise fire event timelines for both sides.
         self.side_a_timeline = [[] for _ in range(battle_duration)]
         self.side_b_timeline = [[] for _ in range(battle_duration)]
-        # Initialise the strength plot for both sides.
+        # Initialise the staying power plot for both sides.
         self.side_a_staying_power = [self.side_a.staying_power]
         self.side_b_staying_power = [self.side_b.staying_power]
         # Set the current time pulse to 0.
