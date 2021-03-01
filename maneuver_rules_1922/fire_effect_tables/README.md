@@ -27,7 +27,7 @@ None!
 
 #### Data files:
 
-None!
+* **4in50\_33lb\_CP\_2500fs\_target**: range tables for the US 4″/50 naval gun using the target charge (2500 f/s muzzle velocity)
 
 ## To do
 Everything!
