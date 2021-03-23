@@ -57,4 +57,4 @@ def life_value(ship_class, t):
 # Example 1: SMS Emden
 print(life_value("CL", 3.6))
 # Example 2: HMAS Sydney
-print(life_value("CA", 5.5))
+print(life_value("CL", 5.5))
