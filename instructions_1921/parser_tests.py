@@ -47,6 +47,28 @@ def parse_group_data(battle_ID_string):
 			
 	return (side_a_group_dictionary, side_b_group_dictionary)
 
+# Testing fleet lists
+side_a_fleet_path = parse_battle_cfg(battle)["Data files"]["side_a_ships"]
+side_b_fleet_path = parse_battle_cfg(battle)["Data files"]["side_b_ships"]
+
+with open(side_a_fleet_path) as input_file:
+	side_a_fleet_reader = csv.reader(input_file, delimiter=',')
+	next(side_a_fleet_reader, None)
+	side_a_fleet_dictionary = {}
+	for row in side_a_fleet_reader:
+		side_a_fleet_dictionary[row[0]] = row[1:]
+
+with open(side_b_fleet_path) as input_file:
+	side_b_fleet_reader = csv.reader(input_file, delimiter=',')
+	next(side_b_fleet_reader, None)
+	side_b_fleet_dictionary = {}
+	for row in side_b_fleet_reader:
+		side_b_fleet_dictionary[row[0]] = row[1:]
+
+print(side_a_fleet_dictionary)
+print(side_b_fleet_dictionary)
+
+
 # Print the name of the battle from the CFG file
 print(parse_battle_cfg("cocos")["General"]["name"])
 # Print the group data dictionaries
