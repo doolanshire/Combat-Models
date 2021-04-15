@@ -1,9 +1,136 @@
+############################################
+# Instructions for Tactical Exercises 1921 #
+#  © Alvaro Radigales, 2021 - MIT licence  #
+############################################
+
+# A Python implementation of the Royal Navy's 1921 wargame. It is designed to
+# automatically resolve battles (using input from external variable files) and
+# calculate the expected outcome.
+
+import configparser
 import csv
 import plot
 import pandas as pd
 
-# This flag is temporary, and will be implemented in an external config file.
-INTERPOLATE = True
+####################
+# PARSER FUNCTIONS #
+####################
+
+# These functions open and parse the external files needed for the model to run.
+# The files contain model settings, battle data, fleet lists, gun specifications etc.
+# Please note that the Royal Navy's 1921 model is relatively simple and it only uses
+# a small fraction of the information in the input files. Other wargame rule sets,
+# such as the Naval War College's 1922 Maneuver Rules, may use all parameters.
+
+
+def parse_model_settings():
+    """Parse the model_settings.cfg file. This file contains global simulation settings
+    such as gun range interpolation or output file options.
+    """
+    # Initialise the parser.
+    model_settings = configparser.ConfigParser()
+    model_settings_file = "model_settings.cfg"
+    model_settings.read(model_settings_file)
+    return model_settings
+
+
+def parse_battle_cfg(battle_id_string):
+    """Parse the config file for a battle from that battle's ID string. The file contains
+    information on conditions affecting the entire battle: name, location, date and time,
+    identity of the belligerents, weather and visibility conditions, and paths to fleet and
+    gunnery data. Returns a ConfigParser reader object.
+    """
+    # Initialise the parser
+    battle_config = configparser.ConfigParser()
+    # Build the battle data path string
+    battle_data_path = "battle_data/{}/{}.cfg".format(battle_id_string, battle_id_string)
+    battle_config.read(battle_data_path)
+    return battle_config
+
+
+def parse_group_data(battle_id_string):
+    """Parse the group data file for a battle from that battle's ID string.This is a CSV
+    file containing one row for each group of ships in each of the two sides of the battle.
+    The row contains the name of the group (used in defining fire events, to know which group
+    fires at which), its members (as a string of comma-separated ship names) and its type
+    ('capital' for battleships and battlecruisers, 'light' for groups made up of light division
+    ships). This last distinction is important because the Royal Navy's 1921 rules use different
+    equations to determine equivalent hitting power for the two: capital ship guns are all converted
+    to 15-inch hits, and light division guns are all converted to 6-inch hits. These two equations
+    are not compatible, so the model cannot really compare the relative firepower of groups of
+    different types
+
+    Returns a tuple of two dictionaries: one with side A's groups, and one with side B's groups"""
+
+    # Build the group data paths
+    group_data_path = "battle_data/{}/".format(battle_id_string)
+    side_a_path = group_data_path + "side_a_groups.csv"
+    side_b_path = group_data_path + "side_b_groups.csv"
+    # Make the group dictionary for side A
+    side_a_group_dictionary = {}
+    with open(side_a_path) as input_file:
+        side_a_groups = csv.reader(input_file, delimiter=',')
+        next(side_a_groups, None)
+        for row in side_a_groups:
+            name = row[0]
+            ships = row[1].split(",")
+            group_type = row[2]
+            side_a_group_dictionary[name] = (ships, group_type)
+    # Make the group dictionary for side B
+    side_b_group_dictionary = {}
+    with open(side_b_path) as input_file:
+        side_b_groups = csv.reader(input_file, delimiter=',')
+        next(side_b_groups, None)
+        for row in side_b_groups:
+            name = row[0]
+            ships = row[1].split(",")
+            group_type = row[2]
+            side_b_group_dictionary[name] = (ships, group_type)
+
+    return side_a_group_dictionary, side_b_group_dictionary
+
+
+def parse_fleet_lists(battle_id_string):
+    """Parse the fleet lists for the two belligerents. These are CSV files containing
+    the parameters of all ships used in the model, listed by name. The paths to these
+    files are determined in each battle's config file.
+
+    Returns a tuple of dictionaries: one with side A's fleet lists, and another for B's.
+    """
+
+    # Define the fleet list paths from the battle config file.
+    side_a_fleet_path = parse_battle_cfg(battle_id_string)["Data files"]["side_a_ships"]
+    side_b_fleet_path = parse_battle_cfg(battle_id_string)["Data files"]["side_b_ships"]
+
+    # Open and parse side A's fleet list.
+    with open(side_a_fleet_path) as input_file:
+        side_a_fleet_reader = csv.reader(input_file, delimiter=',')
+        next(side_a_fleet_reader, None)
+        side_a_fleet_dictionary = {}
+        for row in side_a_fleet_reader:
+            side_a_fleet_dictionary[row[0]] = row[1:]
+
+    # Open and parse side B's fleet list.
+    with open(side_b_fleet_path) as input_file:
+        side_b_fleet_reader = csv.reader(input_file, delimiter=',')
+        next(side_b_fleet_reader, None)
+        side_b_fleet_dictionary = {}
+        for row in side_b_fleet_reader:
+            side_b_fleet_dictionary[row[0]] = row[1:]
+
+    return side_a_fleet_dictionary, side_b_fleet_dictionary
+
+
+##################################
+# BATTLE LOGIC CLASS DEFINITIONS #
+##################################
+
+# Definitions of the Gun, Ship, Group, Side and Battle classes and associated functions.
+# These represent the core logic of the model, and run all relevant battle calculations.
+
+# Flag to use interpolated range data (1000-yard intervals) for gunnery calculations.
+INTERPOLATE = parse_model_settings()["Gunnery"].getboolean('interpolation')
+print(INTERPOLATE)
 
 
 class Gun:
