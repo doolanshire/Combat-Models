@@ -121,6 +121,39 @@ def parse_fleet_lists(battle_id_string):
     return side_a_fleet_dictionary, side_b_fleet_dictionary
 
 
+def parse_gun_data(battle_id_string, gun_table):
+    """Build a dictionary of gun parameters from an external CSV file:
+        - Key: the gun designation (e.g. '13.5 in V' or '12 in XI')
+        - Value: a list of parameters, in the order:
+            * caliber (in inches)
+            * max_ange (maximum range in yards)
+            * long_to_hit (chance to hit per gun and minute at long range)
+            * long_min (minimum range considered to be long)
+            * effective_to_hit (chance to hit per gun and minute at effective range)
+            * effective_min (minimum range considered to be effective)
+            * short_to_hit (chance to hit per gun and minute at short range)
+
+    A new instance of the Gun class is created for each ship from these values. Changing an individual ship's
+    gun (for example to model a certain gun designation not present in the tables) will NOT affect other ships
+    using the same gun designation. Any global changes must be made in the source tables, and not in the program.
+    """
+
+    gun_dictionary = {}
+    gun_data_directory = parse_battle_cfg(battle_id_string)["Data files"]["instructions_1921_gun_data"]
+    gun_data_file = gun_table
+    gun_data_file_path = gun_data_directory + gun_data_file
+    with open(gun_data_file_path) as input_file:
+        reader = csv.reader(input_file, delimiter=",")
+        next(reader)
+        for row in reader:
+            gun_data = list(row)
+            gun_dictionary_entry = gun_data[:2]
+            gun_dictionary_entry += list(map(float, gun_data[2:]))
+            gun_dictionary[gun_data[0]] = gun_dictionary_entry
+
+    return gun_dictionary
+
+
 ##################################
 # BATTLE LOGIC CLASS DEFINITIONS #
 ##################################
@@ -738,16 +771,16 @@ def build_gun_dictionary(filename):
 
 
 # Build the gun dictionary for capital ships
-capital_guns = build_gun_dictionary("gun_data/capital_ship_guns._interpolated.csv")
+capital_guns = parse_gun_data("cocos", "capital_ship_guns.csv")
 
 # Build the gun dictionary for cruisers
-cruiser_guns = build_gun_dictionary("gun_data/light_cruiser_guns._interpolated.csv")
+cruiser_guns = parse_gun_data("cocos", "light_cruiser_guns.csv")
 
 # Build the gun dictionary for destroyers
-destroyer_guns = build_gun_dictionary("gun_data/destroyer_guns._interpolated.csv")
+destroyer_guns = parse_gun_data("cocos", "destroyer_guns.csv")
 
 # Build the gun dictionary for destroyers
-secondary_guns = build_gun_dictionary("gun_data/secondary_guns._interpolated.csv")
+secondary_guns = parse_gun_data("cocos", "secondary_guns.csv")
 
 # CREATE TEST SHIPS
 print("SHIP CREATION TESTS")
