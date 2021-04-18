@@ -29,8 +29,11 @@ def parse_model_settings():
     """
     # Initialise the parser.
     model_settings = configparser.ConfigParser()
+    # Set the config file name.
     model_settings_file = "model_settings.cfg"
+    # Read the file and return the parser object.
     model_settings.read(model_settings_file)
+
     return model_settings
 
 
@@ -40,11 +43,13 @@ def parse_battle_cfg(battle_id_string):
     identity of the belligerents, weather and visibility conditions, and paths to fleet and
     gunnery data. Returns a ConfigParser reader object.
     """
-    # Initialise the parser
+    # Initialise the parser.
     battle_config = configparser.ConfigParser()
-    # Build the battle data path string
+    # Build the battle data path string.
     battle_data_path = "battle_data/{}/{}.cfg".format(battle_id_string, battle_id_string)
+    # Read the file and return the parser object.
     battle_config.read(battle_data_path)
+
     return battle_config
 
 
@@ -62,11 +67,11 @@ def parse_group_data(battle_id_string):
 
     Returns a tuple of two dictionaries: one with side A's groups, and one with side B's groups"""
 
-    # Build the group data paths
+    # Build the group data paths.
     group_data_path = "battle_data/{}/".format(battle_id_string)
     side_a_path = group_data_path + "side_a_groups.csv"
     side_b_path = group_data_path + "side_b_groups.csv"
-    # Make the group dictionary for side A
+    # Make the group dictionary for side A.
     side_a_group_dictionary = {}
     with open(side_a_path) as input_file:
         side_a_groups = csv.reader(input_file, delimiter=',')
@@ -76,7 +81,7 @@ def parse_group_data(battle_id_string):
             ships = row[1].split(",")
             group_type = row[2]
             side_a_group_dictionary[name] = (ships, group_type)
-    # Make the group dictionary for side B
+    # Make the group dictionary for side B.
     side_b_group_dictionary = {}
     with open(side_b_path) as input_file:
         side_b_groups = csv.reader(input_file, delimiter=',')
@@ -87,6 +92,7 @@ def parse_group_data(battle_id_string):
             group_type = row[2]
             side_b_group_dictionary[name] = (ships, group_type)
 
+    # Return both dictionaries.
     return side_a_group_dictionary, side_b_group_dictionary
 
 
@@ -118,11 +124,20 @@ def parse_fleet_lists(battle_id_string):
         for row in side_b_fleet_reader:
             side_b_fleet_dictionary[row[0]] = row[1:]
 
+    # Return both fleet lists as dictionaries.
     return side_a_fleet_dictionary, side_b_fleet_dictionary
 
 
 def parse_gun_data(battle_id_string, gun_table):
-    """Build a dictionary of gun parameters from an external CSV file:
+    """Build a dictionary of gun parameters from an external CSV file.
+
+    Arguments:
+        - battle_id_string: the battle's ID string, used to load the config file containing the gun
+        data directories.
+        - gun_table: the name of the data file containing the desired gun data table.
+
+    Output:
+        A dictionary with the following structure:
         - Key: the gun designation (e.g. '13.5 in V' or '12 in XI')
         - Value: a list of parameters, in the order:
             * caliber (in inches)
@@ -138,10 +153,13 @@ def parse_gun_data(battle_id_string, gun_table):
     using the same gun designation. Any global changes must be made in the source tables, and not in the program.
     """
 
+    # Initialise the gun dictionary.
     gun_dictionary = {}
+    # Set the gun data directory from the battle config file.
     gun_data_directory = parse_battle_cfg(battle_id_string)["Data files"]["instructions_1921_gun_data"]
     gun_data_file = gun_table
     gun_data_file_path = gun_data_directory + gun_data_file
+    # Read the data file and populate the dictionary with the values for each gun.
     with open(gun_data_file_path) as input_file:
         reader = csv.reader(input_file, delimiter=",")
         next(reader)
@@ -151,8 +169,28 @@ def parse_gun_data(battle_id_string, gun_table):
             gun_dictionary_entry += list(map(float, gun_data[2:]))
             gun_dictionary[gun_data[0]] = gun_dictionary_entry
 
+    # Return the dictionary
     return gun_dictionary
 
+
+#######################
+# CONFIGURATION FLAGS #
+#######################
+
+# Global settings determining how the model should run.
+
+# Interpolate hit values at 1000-yard range increments from the original tables.
+INTERPOLATE = parse_model_settings()["Gunnery"].getboolean('interpolation')
+# Output battle outcome to the interpreter console.
+CONSOLE_OUTPUT = parse_model_settings()["Reports"].getboolean('console_output')
+# Save detailed battle report to CSV files in the 'reports' directory.
+REPORT = parse_model_settings()["Reports"].getboolean('export_results')
+# Draw a chart plotting the battle strengths of the two sides throughout the battle.
+DRAW_PLOT = parse_model_settings()["Reports"].get('draw_plot')
+# Automatically save the above chart in the 'reports' directory
+SAVE_PLOT = parse_model_settings()["Reports"].get('save_plot')
+# Save a verbose text description of all actions per round to the 'reports' directory
+VERBOSE = parse_model_settings()["Reports"].get('verbose')
 
 ##################################
 # BATTLE LOGIC CLASS DEFINITIONS #
@@ -160,10 +198,6 @@ def parse_gun_data(battle_id_string, gun_table):
 
 # Definitions of the Gun, Ship, Group, Side and Battle classes and associated functions.
 # These represent the core logic of the model, and run all relevant battle calculations.
-
-# Flag to use interpolated range data (1000-yard intervals) for gunnery calculations.
-INTERPOLATE = parse_model_settings()["Gunnery"].getboolean('interpolation')
-print(INTERPOLATE)
 
 
 class Gun:
@@ -743,31 +777,6 @@ class Battle:
             {"a_staying_power": self.side_a_staying_power,
              "b_staying_power": self.side_b_staying_power
              })
-
-
-def build_gun_dictionary(filename):
-    """Build a dictionary of gun parameters from an external CSV file:
-        - Key: the gun designation (e.g. '13.5 in V' or '12 in XI')
-        - Value: a list of parameters, in the order:
-            * caliber (in inches)
-            * max_ange (maximum range in yards)
-            * long_to_hit (chance to hit per gun and minute at long range)
-            * long_min (minimum range considered to be long)
-            * effective_to_hit (chance to hit per gun and minute at effective range)
-            * effective_min (minimum range considered to be effective)
-            * short_to_hit (chance to hit per gun and minute at short range)
-    """
-
-    gun_dict = {}
-    with open(filename) as sourcefile:
-        reader = csv.reader(sourcefile, delimiter=",")
-        next(reader)
-        for row in reader:
-            gun_data = list(row)
-            gun_dictionary_entry = gun_data[:2]
-            gun_dictionary_entry += list(map(float, gun_data[2:]))
-            gun_dict[gun_data[0]] = gun_dictionary_entry
-    return gun_dict
 
 
 # Build the gun dictionary for capital ships
