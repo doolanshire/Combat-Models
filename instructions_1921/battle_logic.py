@@ -885,7 +885,12 @@ def load_battle(battle_id_string):
 
     side_b = Side(side_name, side_b_groups)
 
-    return side_b
+    # Create the Battle object.
+    battle_name = parse_battle_cfg(battle_id_string)["General"]["name"]
+    battle = Battle(battle_name, side_a, side_b)
+
+    return battle
+
 
 # Build the gun dictionary for the battle
 gun_dictionary = parse_gun_data("cocos")
@@ -962,4 +967,4 @@ print(sydney.hits_received)
 plot.strength_plot(cocos)
 plot.firepower_comparison(german_one, british_one)
 
-print(load_battle("cocos"))
+print(load_battle("cocos").name)
