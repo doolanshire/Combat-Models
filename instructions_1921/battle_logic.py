@@ -88,7 +88,7 @@ def parse_group_data(battle_id_string):
         next(side_b_groups, None)
         for row in side_b_groups:
             name = row[0]
-            ships = row[1].split(",")
+            ships = [ship.strip() for ship in row[1].split(",")]
             group_type = row[2]
             side_b_group_dictionary[name] = (ships, group_type)
 
@@ -114,7 +114,7 @@ def parse_fleet_lists(battle_id_string):
         next(side_a_fleet_reader, None)
         side_a_fleet_dictionary = {}
         for row in side_a_fleet_reader:
-            side_a_fleet_dictionary[row[0]] = row[1:]
+            side_a_fleet_dictionary[row[0]] = row
 
     # Open and parse side B's fleet list.
     with open(side_b_fleet_path) as input_file:
@@ -122,22 +122,28 @@ def parse_fleet_lists(battle_id_string):
         next(side_b_fleet_reader, None)
         side_b_fleet_dictionary = {}
         for row in side_b_fleet_reader:
-            side_b_fleet_dictionary[row[0]] = row[1:]
+            side_b_fleet_dictionary[row[0]] = row
 
     # Return both fleet lists as dictionaries.
     return side_a_fleet_dictionary, side_b_fleet_dictionary
 
 
-def parse_gun_data(battle_id_string, gun_table):
-    """Build a dictionary of gun parameters from an external CSV file.
+def parse_gun_data(battle_id_string):
+    """Build a dictionary of gun parameters from external CSV files
 
     Arguments:
         - battle_id_string: the battle's ID string, used to load the config file containing the gun
         data directories.
-        - gun_table: the name of the data file containing the desired gun data table.
 
     Output:
-        A dictionary with the following structure:
+        A dictionary of dictionaries, with the following keys:
+            - "capital_ship_guns"
+            - "secondary_guns"
+            - "light_cruiser_guns"
+            - "destroyer_guns"
+
+        Each key contains a gunnery table in dictionary format, with the following structure:
+
         - Key: the gun designation (e.g. '13.5 in V' or '12 in XI')
         - Value: a list of parameters, in the order:
             * caliber (in inches)
@@ -157,17 +163,20 @@ def parse_gun_data(battle_id_string, gun_table):
     gun_dictionary = {}
     # Set the gun data directory from the battle config file.
     gun_data_directory = parse_battle_cfg(battle_id_string)["Data files"]["instructions_1921_gun_data"]
-    gun_data_file = gun_table
-    gun_data_file_path = gun_data_directory + gun_data_file
-    # Read the data file and populate the dictionary with the values for each gun.
-    with open(gun_data_file_path) as input_file:
-        reader = csv.reader(input_file, delimiter=",")
-        next(reader)
-        for row in reader:
-            gun_data = list(row)
-            gun_dictionary_entry = gun_data[:2]
-            gun_dictionary_entry += list(map(float, gun_data[2:]))
-            gun_dictionary[gun_data[0]] = gun_dictionary_entry
+    gun_data_files = ["capital_ship_guns.csv", "secondary_guns.csv", "light_cruiser_guns.csv", "destroyer_guns.csv"]
+    for gun_data_file in gun_data_files:
+        gun_table = {}
+        gun_data_file_path = gun_data_directory + gun_data_file
+        # Read the data file and populate the dictionary with the values for each gun.
+        with open(gun_data_file_path) as input_file:
+            reader = csv.reader(input_file, delimiter=",")
+            next(reader)
+            for row in reader:
+                gun_data = list(row)
+                gun_table_entry = gun_data[:2]
+                gun_table_entry += list(map(float, gun_data[2:]))
+                gun_table[gun_data[0]] = gun_table_entry
+        gun_dictionary[gun_data_file[:-4]] = gun_table
 
     # Return the dictionary
     return gun_dictionary
@@ -349,7 +358,7 @@ class Ship:
         self.main_armament_broadside = main_armament_broadside
         self.staying_power = main_armament_count
         # Calculate the staying power multiplier for battleships based on main gun calibre.
-        if self.hull_class == "battleship":
+        if self.hull_class in ["BB", "OBB"]:
             if self.main_armament_type.caliber <= 12:
                 self.staying_power *= 1
             elif self.main_armament_type.caliber <= 14:
@@ -361,7 +370,7 @@ class Ship:
             # Set the minimum caliber of the gun that can damage a battleship.
             self.minimum_to_damage = 12
         # Calculate the staying power multiplier for battle cruisers based on main gun calibre.
-        elif self.hull_class == "battle cruiser":
+        elif self.hull_class in ["CC", "OCC"]:
             if self.main_armament_type.caliber <= 12:
                 self.staying_power *= 0.75
             elif self.main_armament_type.caliber <= 13.5:
@@ -373,7 +382,7 @@ class Ship:
             # Set the minimum caliber of the gun that can damage a battle cruiser.
             self.minimum_to_damage = 12
         # Calculate the staying power multiplier for light cruisers based on main gun calibre.
-        elif self.hull_class == "light cruiser":
+        elif self.hull_class in ["CA", "OCA", "CL", "OCL"]:
             if self.main_armament_type.caliber <= 4:
                 self.staying_power *= 4
             elif self.main_armament_type.caliber <= 6:
@@ -383,7 +392,7 @@ class Ship:
             # Set the minimum caliber of the gun that can damage a battleship.
             self.minimum_to_damage = 4
         # Calculate the staying power multiplier for light squadron ships based on main gun calibre.
-        elif self.hull_class in ("flotilla leader", "destroyer"):
+        elif self.hull_class in ["DL", "DD", "ODD", "DM"]:
             self.staying_power *= 1
             # Note that a value of 1 in the above line will not change staying power at all. The
             # line is left here for clarity and in case one needs to experiment with the value.
@@ -779,25 +788,78 @@ class Battle:
              })
 
 
-# Build the gun dictionary for capital ships
-capital_guns = parse_gun_data("cocos", "capital_ship_guns.csv")
+#################
+# BATTLE LOADER #
+#################
 
-# Build the gun dictionary for cruisers
-cruiser_guns = parse_gun_data("cocos", "light_cruiser_guns.csv")
+# The following function takes a battle ID string as its only input, and loads all of that battle's relevant parameters
+# from its external data files. It then creates all the elements (guns, ships, groups, etc.) needed to resolve it, and
+# returns a complete Battle object, ready for simulation.
 
-# Build the gun dictionary for destroyers
-destroyer_guns = parse_gun_data("cocos", "destroyer_guns.csv")
+def load_battle(battle_id_string):
+    """Load all the information relevant to the battle specified by the input string, and return a working Battle object
+    for simulation and analysis.
+    """
 
-# Build the gun dictionary for destroyers
-secondary_guns = parse_gun_data("cocos", "secondary_guns.csv")
+    # Load gun data.
+
+    # Build the gun dictionary.
+    gun_table_dictionary = parse_gun_data("cocos")
+
+    # Load fleet data.
+    side_a_fleet_dictionary, side_b_fleet_dictionary = parse_fleet_lists(battle_id_string)
+
+    # Load both side's group data
+    side_a_group_dictionary, side_b_group_dictionary = parse_group_data(battle_id_string)
+
+    # Make two dictionaries containing each side's Ship objects.
+    # Initialise a list of the names of all the ships in side A.
+    side_a_ship_roster = []
+    # Iterate over side A's groups.
+    for group in side_a_group_dictionary:
+        for ship_name in side_a_group_dictionary[group][0]:
+            # Avoid duplicates.
+            if ship_name not in side_a_ship_roster:
+                side_a_ship_roster.append(ship_name)
+
+    # Initialise a list of the names of all the ships in side B.
+    side_b_ship_roster = []
+    # Iterate over side B's groups.
+    for group in side_b_group_dictionary:
+        for ship_name in side_b_group_dictionary[group][0]:
+            # Avoid duplicates.
+            if ship_name not in side_b_ship_roster:
+                side_b_ship_roster.append(ship_name)
+
+    # Initialise the ship dictionary for side A.
+    side_a_ship_dictionary = {}
+
+    # Populate it with unique Ship objects.
+    for ship_name in side_a_ship_roster:
+        name = side_a_fleet_dictionary[ship_name][0]
+        hull_class = side_a_fleet_dictionary[ship_name][1]
+        gun_table = side_a_fleet_dictionary[ship_name][13]
+        gun_designation = side_a_fleet_dictionary[ship_name][14]
+        main_armament_type = Gun(*gun_table_dictionary[gun_table][gun_designation])
+        main_armament_count = side_a_fleet_dictionary[ship_name][15]
+        main_armament_broadside = side_a_fleet_dictionary[ship_name][16]
+        side_a_ship_dictionary[ship_name] = Ship(name, hull_class, main_armament_type, main_armament_count,
+                                                 main_armament_broadside)
+
+    return side_a_ship_dictionary
+
+
+# Build the gun dictionary for the battle
+gun_dictionary = parse_gun_data("cocos")
+
 
 # CREATE TEST SHIPS
 print("SHIP CREATION TESTS")
-emden = Ship("SMS Emden", "light cruiser", Gun(*secondary_guns["4 in IX"]), 10, 5)
+emden = Ship("SMS Emden", "CL", Gun(*gun_dictionary["secondary_guns"]["4 in IX"]), 10, 5)
 emden.main_armament_type.caliber = 4.1
 print("* Ship information *")
 print(emden)
-sydney = Ship("HMAS Sydney", "light cruiser", Gun(*cruiser_guns["6 in XII"]), 8, 5)
+sydney = Ship("HMAS Sydney", "CL", Gun(*gun_dictionary["light_cruiser_guns"]["6 in XII"]), 8, 5)
 print(sydney)
 
 # CREATE TEST GROUPS
@@ -861,3 +923,5 @@ print(sydney.hits_received)
 
 plot.strength_plot(cocos)
 plot.firepower_comparison(german_one, british_one)
+
+print(load_battle("cocos")['Sydney'])

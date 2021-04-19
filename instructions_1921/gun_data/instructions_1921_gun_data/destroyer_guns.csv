@@ -1,3 +1,3 @@
-designation,type,caliber,max_range,long_to_hit,long_min,effective_to_hit,effective_min,short_to_hit,first_regression_term,second_regression_term,third_regression_term
-4.7 in I,destroyer,4.7,16000,0.033,10000,0.1,7000,0.267,1.4543151227236708e-09,-4.9288640491826134e-05,0.4199651762842902
-4 in V,destroyer,4.0,13700,0.042,9000,0.125,6000,0.33299999999999996,2.229780685152543e-09,-6.776562263363542e-05,0.5144553089525479
+"designation","type","caliber","max_range","long_to_hit","long_min","effective_to_hit","effective_min","short_to_hit","first_regression_term","second_regression_term","third_regression_term"
+"4.7 in I","destroyer","4.7","16000","0.033","10000","0.1","7000","0.267","0.0000000014543151227236708","-0.000049288640491826134","0.4199651762842902"
+"4 in V","destroyer","4","13700","0.042","9000","0.125","6000","0.33299999999999996","0.000000002229780685152543","-0.00006776562263363542","0.5144553089525479"
