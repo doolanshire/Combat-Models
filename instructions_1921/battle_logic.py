@@ -96,6 +96,58 @@ def parse_group_data(battle_id_string):
     return side_a_group_dictionary, side_b_group_dictionary
 
 
+def parse_battle_events(battle_id_string):
+    """Parse the event data files for both belligerents in a battle from that battle's ID
+    string. These are CSV files detailing all fire actions in an engagement (which groups
+    fire at which, when and for how long, and any conditions that might affect gunnery.
+    The function outputs two ordered lists of events (one for each belligerent) to build
+    the battle timeline from.
+    """
+
+    # Build the event data file paths.
+    event_data_path = "battle_data/{}/".format(battle_id_string)
+    side_a_event_file = event_data_path + "side_a_events.csv"
+    side_b_event_file = event_data_path + "side_b_events.csv"
+
+    # Build the event list for side A.
+    side_a_events = []
+    with open(side_a_event_file) as input_file:
+        side_a_event_table = csv.reader(input_file, delimiter=',')
+        next(side_a_event_table, None)
+        for row in side_a_event_table:
+            if row[3] == "TRUE":
+                firer = row[4]
+                target = row[5]
+                target_range = float(row[9]) * 1000
+                start = int(row[1])
+                duration = int(row[2])
+                # Revise these two later.
+                salvo_size = None
+                modifier = 1
+
+                side_a_events.append((firer, target, target_range, start, duration, salvo_size, modifier))
+
+    # Build the event list for side B.
+    side_b_events = []
+    with open(side_b_event_file) as input_file:
+        side_b_event_table = csv.reader(input_file, delimiter=',')
+        next(side_b_event_table, None)
+        for row in side_b_event_table:
+            if row[3] == "TRUE":
+                firer = row[4]
+                target = row[5]
+                target_range = float(row[9]) * 1000
+                start = int(row[1])
+                duration = int(row[2])
+                # Revise these two later.
+                salvo_size = None
+                modifier = 1
+
+                side_b_events.append((firer, target, target_range, start, duration, salvo_size, modifier))
+
+    return side_a_events, side_b_events
+
+
 def parse_fleet_lists(battle_id_string):
     """Parse the fleet lists for the two belligerents. These are CSV files containing
     the parameters of all ships used in the model, listed by name. The paths to these
@@ -160,7 +212,7 @@ def parse_gun_data(battle_id_string):
     """
 
     # Initialise the gun dictionary.
-    gun_dictionary = {}
+    gun_tables = {}
     # Set the gun data directory from the battle config file.
     gun_data_directory = parse_battle_cfg(battle_id_string)["Data files"]["instructions_1921_gun_data"]
     gun_data_files = ["capital_ship_guns.csv", "secondary_guns.csv", "light_cruiser_guns.csv", "destroyer_guns.csv"]
@@ -176,10 +228,10 @@ def parse_gun_data(battle_id_string):
                 gun_table_entry = gun_data[:2]
                 gun_table_entry += list(map(float, gun_data[2:]))
                 gun_table[gun_data[0]] = gun_table_entry
-        gun_dictionary[gun_data_file[:-4]] = gun_table
+        gun_tables[gun_data_file[:-4]] = gun_table
 
     # Return the dictionary
-    return gun_dictionary
+    return gun_tables
 
 
 #######################
