@@ -354,11 +354,11 @@ class Ship:
         self.name = name
         self.hull_class = hull_class
         self.main_armament_type = main_armament_type
-        self.main_armament_count = main_armament_count
-        self.main_armament_broadside = main_armament_broadside
-        self.staying_power = main_armament_count
+        self.main_armament_count = int(main_armament_count)
+        self.main_armament_broadside = int(main_armament_broadside)
+        self.staying_power = self.main_armament_count
         # Calculate the staying power multiplier for battleships based on main gun calibre.
-        if self.hull_class in ["BB", "OBB"]:
+        if self.hull_class in ("BB", "OBB"):
             if self.main_armament_type.caliber <= 12:
                 self.staying_power *= 1
             elif self.main_armament_type.caliber <= 14:
@@ -541,9 +541,10 @@ class Group:
         - update(): applies pending damage to all ships in the group, and refreshes the group's status.
     """
 
-    def __init__(self, name, members):
+    def __init__(self, name, members, group_type):
         self.name = name
         self.members = members
+        self.group_type = group_type
         self.staying_power = sum(ship.staying_power for ship in members)
         self.hit_points = self.starting_hit_points = self.staying_power
         self.status = 1
@@ -841,13 +842,50 @@ def load_battle(battle_id_string):
         gun_table = side_a_fleet_dictionary[ship_name][13]
         gun_designation = side_a_fleet_dictionary[ship_name][14]
         main_armament_type = Gun(*gun_table_dictionary[gun_table][gun_designation])
-        main_armament_count = side_a_fleet_dictionary[ship_name][15]
-        main_armament_broadside = side_a_fleet_dictionary[ship_name][16]
+        main_armament_count = int(side_a_fleet_dictionary[ship_name][15])
+        main_armament_broadside = int(side_a_fleet_dictionary[ship_name][16])
         side_a_ship_dictionary[ship_name] = Ship(name, hull_class, main_armament_type, main_armament_count,
                                                  main_armament_broadside)
 
-    return side_a_ship_dictionary
+    # Initialise the ship dictionary for side B.
+    side_b_ship_dictionary = {}
 
+    # Populate it with unique Ship objects.
+    for ship_name in side_b_ship_roster:
+        name = side_b_fleet_dictionary[ship_name][0]
+        hull_class = side_b_fleet_dictionary[ship_name][1]
+        gun_table = side_b_fleet_dictionary[ship_name][13]
+        gun_designation = side_b_fleet_dictionary[ship_name][14]
+        main_armament_type = Gun(*gun_table_dictionary[gun_table][gun_designation])
+        main_armament_count = side_b_fleet_dictionary[ship_name][15]
+        main_armament_broadside = side_b_fleet_dictionary[ship_name][16]
+        side_b_ship_dictionary[ship_name] = Ship(name, hull_class, main_armament_type, main_armament_count,
+                                                 main_armament_broadside)
+
+    # Create the two belligerent sides.
+    # Begin with side A.
+    side_name = parse_battle_cfg("cocos")["Sides"]["side_a"]
+    side_a_groups = []
+    for group in side_a_group_dictionary:
+        group_name = group
+        group_members = [side_a_ship_dictionary[ship] for ship in side_a_group_dictionary[group][0]]
+        group_type = side_a_group_dictionary[group][1]
+        side_a_groups.append(Group(group_name, group_members, group_type))
+
+    side_a = Side(side_name, side_a_groups)
+
+    # Now with side B.
+    side_name = parse_battle_cfg("cocos")["Sides"]["side_b"]
+    side_b_groups = []
+    for group in side_b_group_dictionary:
+        group_name = group
+        group_members = [side_b_ship_dictionary[ship] for ship in side_b_group_dictionary[group][0]]
+        group_type = side_b_group_dictionary[group][1]
+        side_b_groups.append(Group(group_name, group_members, group_type))
+
+    side_b = Side(side_name, side_b_groups)
+
+    return side_b
 
 # Build the gun dictionary for the battle
 gun_dictionary = parse_gun_data("cocos")
@@ -865,9 +903,9 @@ print(sydney)
 # CREATE TEST GROUPS
 print("GROUP CREATION TESTS")
 print("* Group information *")
-german_one = Group("SMS Emden", [emden])
+german_one = Group("SMS Emden", [emden], "light")
 print(german_one)
-british_one = Group("HMAS Sydney", [sydney])
+british_one = Group("HMAS Sydney", [sydney], "light")
 print(british_one)
 
 # Test side creation
@@ -924,4 +962,4 @@ print(sydney.hits_received)
 plot.strength_plot(cocos)
 plot.firepower_comparison(german_one, british_one)
 
-print(load_battle("cocos")['Sydney'])
+print(load_battle("cocos"))
