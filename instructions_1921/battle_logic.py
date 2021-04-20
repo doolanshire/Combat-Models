@@ -9,8 +9,9 @@
 
 import configparser
 import csv
-import plot
+import matplotlib.pyplot as plt
 import pandas as pd
+import seaborn as sns
 
 ####################
 # PARSER FUNCTIONS #
@@ -824,8 +825,14 @@ class Battle:
         # Advance the pulse counter by 1.
         self.time_pulse += 1
 
+    def strength_plot(self):
+        """Produce a chart of the relative fighting strengths of both sides during the battle."""
+        sns.set_theme()
+        sns.lineplot(data=self.battle_data)
+        plt.show()
+
     def resolve(self):
-        """Resolve the battle until there are no more events or one side is eliminated"""
+        """Resolve the battle until there are no more events or one side is eliminated."""
         while self.time_pulse < (len(self.side_a_timeline)) \
                 and self.side_a.hit_points > 0 and self.side_b.hit_points > 0:
             self.advance_pulse()
@@ -843,6 +850,7 @@ class Battle:
 # The following function takes a battle ID string as its only input, and loads all of that battle's relevant parameters
 # from its external data files. It then creates all the elements (guns, ships, groups, etc.) needed to resolve it, and
 # returns a complete Battle object, ready for simulation.
+
 
 def load_battle(battle_id_string):
     """Load all the information relevant to the battle specified by the input string, and return a working Battle object
@@ -954,86 +962,7 @@ def load_battle(battle_id_string):
     return battle
 
 
-"""
-# Build the gun dictionary for the battle
-gun_dictionary = parse_gun_data("cocos")
-
-
-# CREATE TEST SHIPS
-print("SHIP CREATION TESTS")
-emden = Ship("SMS Emden", "CL", Gun(*gun_dictionary["secondary_guns"]["4 in IX"]), 10, 5)
-emden.main_armament_type.caliber = 4.1
-print("* Ship information *")
-print(emden)
-sydney = Ship("HMAS Sydney", "CL", Gun(*gun_dictionary["light_cruiser_guns"]["6 in XII"]), 8, 5)
-print(sydney)
-
-# CREATE TEST GROUPS
-print("GROUP CREATION TESTS")
-print("* Group information *")
-german_one = Group("SMS Emden", [emden], "light")
-print(german_one)
-british_one = Group("HMAS Sydney", [sydney], "light")
-print(british_one)
-
-# Test side creation
-print("* Creating German side *")
-germany = Side("Germany", [german_one])
-print(germany)
-print("* Creating a British side *")
-britain = Side("Britain", [british_one])
-print(britain)
-
-# Test fire event registration
-# Minute 0, track point 1
-germany.register_fire_event(0, 0, 10500, 0, 5, None, 1)
-# Minute 5, track point 2
-germany.register_fire_event(0, 0, 8100, 5, 5, None, 1)
-# Minute 10, track point 3
-germany.register_fire_event(0, 0, 10000, 10, 5, None, 1)
-# Minute 15, track point 4
-germany.register_fire_event(0, 0, 8000, 15, 5, None, 1)
-# Minute 20, track point 5
-
-germany.register_fire_event(0, 0, 9500, 20, 5, None, 1)
-britain.register_fire_event(0, 0, 9500, 20, 5, None, 1)
-# Minute 25, track point 6
-germany.register_fire_event(0, 0, 7000, 25, 5, None, 1)
-britain.register_fire_event(0, 0, 7000, 25, 5, None, 1)
-# Minute 30, track point 7
-germany.register_fire_event(0, 0, 5500, 30, 5, None, 1)
-britain.register_fire_event(0, 0, 5500, 30, 5, None, 1)
-# Minute 35, track point 8
-# Emden obscured by smoke
-# Minute 40, track point 9
-germany.register_fire_event(0, 0, 9500, 40, 5, None, 1)
-britain.register_fire_event(0, 0, 9500, 40, 5, None, 1)
-# Minute 45, track point 10
-germany.register_fire_event(0, 0, 7000, 45, 5, None, 1)
-britain.register_fire_event(0, 0, 7000, 45, 5, None, 1)
-
-print(germany.fire_events)
-print(britain.fire_events)
-
-# Test battle creation
-print("* Creating a test battle *")
-cocos = Battle("Keeling Islands 1914 (Sydney vs. Emden)", germany, britain)
-print(cocos.side_a_timeline)
-print(cocos.side_b_timeline)
-
-cocos.resolve()
-print(cocos.battle_data)
-
-print(emden.hits_received)
-print(sydney.hits_received)
-
-plot.strength_plot(cocos)
-plot.firepower_comparison(german_one, british_one)
-"""
-
 cocos = load_battle("cocos")
 cocos.resolve()
-plot.strength_plot(cocos)
 print(cocos.battle_data)
-print(cocos.side_a.groups['Sydney'].members[0].hits_received)
-print(cocos.side_b.groups['Emden'].members[0].hits_received)
+cocos.strength_plot()
