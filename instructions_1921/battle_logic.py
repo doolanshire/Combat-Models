@@ -3,9 +3,9 @@
 #  © Alvaro Radigales, 2021 - MIT licence  #
 ############################################
 
-# A Python implementation of the Royal Navy's 1921 wargame. It is designed to
-# automatically resolve battles (using input from external variable files) and
-# calculate the expected outcome.
+# A Python implementation of the Royal Navy's 1921 wargame rules. It is designed to create a model of a battle from a
+# series of external, human-readable files, and then resolve it by playing out the action at one-minute intervals. The
+# battle outcome can be logged or plotted for analysis.
 
 import configparser
 import csv
@@ -16,16 +16,15 @@ import pandas as pd
 # PARSER FUNCTIONS #
 ####################
 
-# These functions open and parse the external files needed for the model to run.
-# The files contain model settings, battle data, fleet lists, gun specifications etc.
-# Please note that the Royal Navy's 1921 model is relatively simple and it only uses
-# a small fraction of the information in the input files. Other wargame rule sets,
-# such as the Naval War College's 1922 Maneuver Rules, may use all parameters.
+# These functions open and parse the external files needed for the model to run. The files contain model settings,
+# battle data, fleet lists, gun specifications etc. Please note that the Royal Navy's 1921 model is relatively simple
+# and it only uses a small fraction of the information in the input files. Other wargame rule sets, such as the Naval
+# War College's 1922 Maneuver Rules, may use all parameters.
 
 
 def parse_model_settings():
-    """Parse the model_settings.cfg file. This file contains global simulation settings
-    such as gun range interpolation or output file options.
+    """Parse the model_settings.cfg file. This file contains global simulation settings such as gun range interpolation
+    or output file options.
     """
     # Initialise the parser.
     model_settings = configparser.ConfigParser()
@@ -38,10 +37,9 @@ def parse_model_settings():
 
 
 def parse_battle_cfg(battle_id_string):
-    """Parse the config file for a battle from that battle's ID string. The file contains
-    information on conditions affecting the entire battle: name, location, date and time,
-    identity of the belligerents, weather and visibility conditions, and paths to fleet and
-    gunnery data. Returns a ConfigParser reader object.
+    """Parse the config file for a battle from that battle's ID string. The file contains information on conditions
+    affecting the entire battle: name, location, date and time, identity of the belligerents, weather and visibility
+    conditions, and paths to fleet and gunnery data. Returns a ConfigParser reader object.
     """
     # Initialise the parser.
     battle_config = configparser.ConfigParser()
@@ -54,16 +52,14 @@ def parse_battle_cfg(battle_id_string):
 
 
 def parse_group_data(battle_id_string):
-    """Parse the group data file for a battle from that battle's ID string.This is a CSV
-    file containing one row for each group of ships in each of the two sides of the battle.
-    The row contains the name of the group (used in defining fire events, to know which group
-    fires at which), its members (as a string of comma-separated ship names) and its type
-    ('capital' for battleships and battlecruisers, 'light' for groups made up of light division
-    ships). This last distinction is important because the Royal Navy's 1921 rules use different
-    equations to determine equivalent hitting power for the two: capital ship guns are all converted
-    to 15-inch hits, and light division guns are all converted to 6-inch hits. These two equations
-    are not compatible, so the model cannot really compare the relative firepower of groups of
-    different types
+    """Parse the group data file for a battle from that battle's ID string.This is a CSV file containing one row for
+    each group of ships in each of the two sides of the battle. The row contains the name of the group (used in
+    defining fire events, to know which group fires at which), its members (as a string of comma-separated ship names)
+    and its type ('capital' for battleships and battlecruisers, 'light' for groups made up of light division ships).
+    This last distinction is important because the Royal Navy's 1921 rules use different equations to determine
+    equivalent hitting power for the two: capital ship guns are all converted to 15-inch hits, and light division guns
+    are all converted to 6-inch hits. These two equations are not compatible, so the model cannot really compare the
+    relative firepower of groups of different types.
 
     Returns a tuple of two dictionaries: one with side A's groups, and one with side B's groups"""
 
@@ -97,10 +93,9 @@ def parse_group_data(battle_id_string):
 
 
 def parse_battle_events(battle_id_string):
-    """Parse the event data files for both belligerents in a battle from that battle's ID
-    string. These are CSV files detailing all fire actions in an engagement (which groups
-    fire at which, when and for how long, and any conditions that might affect gunnery.
-    The function outputs two ordered lists of events (one for each belligerent) to build
+    """Parse the event data files for both belligerents in a battle from that battle's ID string. These are CSV files
+    detailing all fire actions in an engagement (which groups fire at which, when and for how long, and any conditions
+    that might affect gunnery. The function outputs two ordered lists of events (one for each belligerent) to build
     the battle timeline from.
     """
 
@@ -115,6 +110,7 @@ def parse_battle_events(battle_id_string):
         side_a_event_table = csv.reader(input_file, delimiter=',')
         next(side_a_event_table, None)
         for row in side_a_event_table:
+            # Check whether the event is a fire event, and if so, add it to the list.
             if row[3] == "TRUE":
                 firer = row[4]
                 target = row[5]
@@ -133,6 +129,7 @@ def parse_battle_events(battle_id_string):
         side_b_event_table = csv.reader(input_file, delimiter=',')
         next(side_b_event_table, None)
         for row in side_b_event_table:
+            # Check whether the event is a fire event, and if so, add it to the list.
             if row[3] == "TRUE":
                 firer = row[4]
                 target = row[5]
@@ -149,9 +146,8 @@ def parse_battle_events(battle_id_string):
 
 
 def parse_fleet_lists(battle_id_string):
-    """Parse the fleet lists for the two belligerents. These are CSV files containing
-    the parameters of all ships used in the model, listed by name. The paths to these
-    files are determined in each battle's config file.
+    """Parse the fleet lists for the two belligerents. These are CSV files containing the parameters of all ships used
+    in the model, listed by name. The paths to these files are determined in each battle's config file.
 
     Returns a tuple of dictionaries: one with side A's fleet lists, and another for B's.
     """
@@ -184,8 +180,7 @@ def parse_gun_data(battle_id_string):
     """Build a dictionary of gun parameters from external CSV files
 
     Arguments:
-        - battle_id_string: the battle's ID string, used to load the config file containing the gun
-        data directories.
+        - battle_id_string: the battle's ID string, used to load the config file containing the gun data directories.
 
     Output:
         A dictionary of dictionaries, with the following keys:
@@ -206,9 +201,9 @@ def parse_gun_data(battle_id_string):
             * effective_min (minimum range considered to be effective)
             * short_to_hit (chance to hit per gun and minute at short range)
 
-    A new instance of the Gun class is created for each ship from these values. Changing an individual ship's
-    gun (for example to model a certain gun designation not present in the tables) will NOT affect other ships
-    using the same gun designation. Any global changes must be made in the source tables, and not in the program.
+    A new instance of the Gun class is created for each ship from these values. Changing an individual ship's gun (for
+    example to model a certain gun designation not present in the tables) will NOT affect other ships using the same
+    gun designation. Any global changes must be made in the source tables, and not in the program itself.
     """
 
     # Initialise the gun dictionary.
@@ -854,7 +849,7 @@ def load_battle(battle_id_string):
     for simulation and analysis.
     """
 
-    # Load gun data.
+    # LOAD GUN DATA
 
     # Build the gun dictionary.
     gun_table_dictionary = parse_gun_data("cocos")
@@ -865,7 +860,15 @@ def load_battle(battle_id_string):
     # Load both side's group data
     side_a_group_dictionary, side_b_group_dictionary = parse_group_data(battle_id_string)
 
-    # Make two dictionaries containing each side's Ship objects.
+    # Make two dictionaries containing each side's Ship objects. Note that all Ship objects present in the battle are
+    # created here, and they are unique. Any other mentions of ships (in group lists, fire methods etc.) in the program
+    # simply refer to the Ship objects in these two dictionaries. If the user wants to duplicate a ship (in order to
+    # create a new member of an existing class for example) they must make a new entry in the data files AND give it a
+    # unique name. The reason this is handled this way is twofold: one, it makes intuitive sense, as real ships are
+    # also unique; two, it allows the user to place the same Ship object in more than one group (so that it can, for
+    # instance, fire as part of a column but receive fire individually). As only one instance of the ship exists,
+    # damaging it in one part of the program will affect it in all other parts.
+
     # Initialise a list of the names of all the ships in side A.
     side_a_ship_roster = []
     # Iterate over side A's groups.
@@ -944,7 +947,7 @@ def load_battle(battle_id_string):
     for event in side_b_events:
         side_b.register_fire_event(*event)
 
-    # Create the Battle object.
+    # Create the Battle object and return it.
     battle_name = parse_battle_cfg(battle_id_string)["General"]["name"]
     battle = Battle(battle_name, side_a, side_b)
 
@@ -1033,3 +1036,4 @@ cocos.resolve()
 plot.strength_plot(cocos)
 print(cocos.battle_data)
 print(cocos.side_a.groups['Sydney'].members[0].hits_received)
+print(cocos.side_b.groups['Emden'].members[0].hits_received)
