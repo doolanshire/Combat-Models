@@ -1,18 +1,18 @@
 Time,Start,Duration,Fire,Firer,Target,Group speed (kn),Group course,Target speed (kn),Range (Kyd),Target bearing,Bearing side,Deflection,Deflection side,First correction modifier,Second correction modifier
 Initial,NA,NA,FALSE,Sydney,Emden,23.3,340,19.17,9.9,71,P,115,S,1,1
-9:40 - 9:43,0,3,TRUE,Sydney,Emden,23.3,356,19.17,9.97,91,P,86,S,1,1
-9:43 - 9:46,3,3,TRUE,Sydney,Emden,23.73,4,19.59,10.06,101,P,84,S,1,1
-9:46 - 9:49,6,3,TRUE,Sydney,Emden,24.15,7,20.01,10.34,106,P,79,S,1,1
-9:49 - 9:52,9,3,TRUE,Sydney,Emden,24.58,3,20.42,10.6,104,P,77,S,1,1
-9:52 - 9:55,12,3,TRUE,Sydney,Emden,25,3,20.84,10.58,107,P,67,S,1,1
-9:55 - 9:58,15,3,TRUE,Sydney,Emden,22.28,1,19.15,10.43,108,P,62,S,1,1
-9:58 - 10:01,18,3,TRUE,Sydney,Emden,19.55,0,17.46,10,111,P,32,S,1,1
+9:40 - 9:43,0,3,FALSE,Sydney,Emden,23.3,356,19.17,9.97,91,P,86,S,1,1
+9:43 - 9:46,3,3,FALSE,Sydney,Emden,23.73,4,19.59,10.06,101,P,84,S,1,1
+9:46 - 9:49,6,3,FALSE,Sydney,Emden,24.15,7,20.01,10.34,106,P,79,S,1,1
+9:49 - 9:52,9,3,FALSE,Sydney,Emden,24.58,3,20.42,10.6,104,P,77,S,1,1
+9:52 - 9:55,12,3,FALSE,Sydney,Emden,25,3,20.84,10.58,107,P,67,S,1,1
+9:55 - 9:58,15,3,FALSE,Sydney,Emden,22.28,1,19.15,10.43,108,P,62,S,1,1
+9:58 - 10:01,18,3,FALSE,Sydney,Emden,19.55,0,17.46,10,111,P,32,S,1,1
 10:01 - 10:04,21,3,TRUE,Sydney,Emden,16.83,354,15.77,9.18,111,P,32,P,1,1
 10:04 - 10:07,24,3,TRUE,Sydney,Emden,14.1,333,14.08,8.6,105,P,64,P,1,1
 10:07 - 10:10,27,3,TRUE,Sydney,Emden,11.21,312,14.94,8.53,104,P,77,P,1,1
 10:10 - 10:13,30,3,TRUE,Sydney,Emden,8.33,296,15.8,8.21,102,P,77,P,1,1
 10:13 - 10:16,33,3,TRUE,Sydney,Emden,5.44,280,16.66,7.96,102,P,78,P,1,1
-10:16 - 10:19,36,3,TRUE,Sydney,Emden,7.52,272,14.68,7.83,109,P,82,P,1,1
+10:16 - 10:19,36,3,FALSE,Sydney,Emden,7.52,272,14.68,7.83,109,P,82,P,1,1
 10:19 - 10:22,39,3,TRUE,Sydney,Emden,9.61,263,12.71,7.89,117,P,55,P,1,1
 10:22 - 10:25,42,3,TRUE,Sydney,Emden,11.69,261,10.73,7.54,121,P,40,S,1,1
 10:25 - 10:28,45,3,TRUE,Sydney,Emden,11.87,258,12.44,7.33,122,P,44,S,1,1

@@ -671,7 +671,7 @@ class Side:
 
     Attributes:
         - name: the group's name (string).
-        - groups: the ship groups belonging to the side (list).
+        - groups: the ship groups belonging to the side (dictionary).
         - staying_power: the total staying power of all the ships in all groups (float).
         - hit_points: the remaining hit points of all the ships in all groups (float).
         - status: the fraction of remaining hit points for the whole side. A value of 1 means the side is intact, while
@@ -693,7 +693,7 @@ class Side:
     def __init__(self, name, groups):
         self.name = name
         self.groups = groups
-        self.staying_power = sum(group.staying_power for group in groups)
+        self.staying_power = sum(groups[group].staying_power for group in groups)
         self.hit_points = self.starting_hit_points = self.staying_power
         self.status = 1
         self.fire_events = []
@@ -703,9 +703,9 @@ class Side:
         """Applies pending damage to all groups in the side, and updates hit points and status accordingly.
         This method is run once every time pulse.
         """
-        for group in self.groups:
+        for group in self.groups.values():
             group.update()
-        self.hit_points = sum(group.hit_points for group in self.groups)
+        self.hit_points = sum(group.hit_points for group in self.groups.values())
         self.status = self.hit_points / self.staying_power
 
     def register_fire_event(self, firer, target, target_range, start, duration, salvo_size=None, modifier=1):
@@ -917,25 +917,32 @@ def load_battle(battle_id_string):
     # Create the two belligerent sides.
     # Begin with side A.
     side_name = parse_battle_cfg("cocos")["Sides"]["side_a"]
-    side_a_groups = []
+    side_a_groups = {}
     for group in side_a_group_dictionary:
         group_name = group
         group_members = [side_a_ship_dictionary[ship] for ship in side_a_group_dictionary[group][0]]
         group_type = side_a_group_dictionary[group][1]
-        side_a_groups.append(Group(group_name, group_members, group_type))
+        side_a_groups[group] = Group(group_name, group_members, group_type)
 
     side_a = Side(side_name, side_a_groups)
 
     # Now with side B.
     side_name = parse_battle_cfg("cocos")["Sides"]["side_b"]
-    side_b_groups = []
+    side_b_groups = {}
     for group in side_b_group_dictionary:
         group_name = group
         group_members = [side_b_ship_dictionary[ship] for ship in side_b_group_dictionary[group][0]]
         group_type = side_b_group_dictionary[group][1]
-        side_b_groups.append(Group(group_name, group_members, group_type))
+        side_b_groups[group] = Group(group_name, group_members, group_type)
 
     side_b = Side(side_name, side_b_groups)
+
+    # Register the fire events.
+    side_a_events, side_b_events = parse_battle_events(battle_id_string)
+    for event in side_a_events:
+        side_a.register_fire_event(*event)
+    for event in side_b_events:
+        side_b.register_fire_event(*event)
 
     # Create the Battle object.
     battle_name = parse_battle_cfg(battle_id_string)["General"]["name"]
@@ -944,6 +951,7 @@ def load_battle(battle_id_string):
     return battle
 
 
+"""
 # Build the gun dictionary for the battle
 gun_dictionary = parse_gun_data("cocos")
 
@@ -1018,5 +1026,10 @@ print(sydney.hits_received)
 
 plot.strength_plot(cocos)
 plot.firepower_comparison(german_one, british_one)
+"""
 
-print(load_battle("cocos").name)
+cocos = load_battle("cocos")
+cocos.resolve()
+plot.strength_plot(cocos)
+print(cocos.battle_data)
+print(cocos.side_a.groups['Sydney'].members[0].hits_received)
