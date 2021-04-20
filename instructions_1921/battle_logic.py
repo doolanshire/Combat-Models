@@ -249,6 +249,7 @@ SAVE_PLOT = parse_model_settings()["Reports"].get('save_plot')
 # Save a verbose text description of all actions per round to the 'reports' directory
 VERBOSE = parse_model_settings()["Reports"].get('verbose')
 
+
 ##################################
 # BATTLE LOGIC CLASS DEFINITIONS #
 ##################################
@@ -666,7 +667,7 @@ class Side:
     """One of two opposing sides in a battle, formed by one or more groups.
 
     Attributes:
-        - name: the group's name (string).
+        - name: the side's name (string).
         - groups: the ship groups belonging to the side (dictionary).
         - staying_power: the total staying power of all the ships in all groups (float).
         - hit_points: the remaining hit points of all the ships in all groups (float).
@@ -828,8 +829,16 @@ class Battle:
     def strength_plot(self):
         """Produce a chart of the relative fighting strengths of both sides during the battle."""
         sns.set_theme()
-        sns.lineplot(data=self.battle_data)
-        plt.show()
+        plt.plot(self.battle_data)
+        plt.title(self.name, pad=15, fontweight='bold')
+        plt.ylabel('Staying power', labelpad=5)
+        plt.xlabel('Minute', labelpad=5)
+        plt.legend(title="Belligerents", loc="lower left", labels=[self.side_a.name, self.side_b.name])
+        chart = plt.gcf()
+        if DRAW_PLOT:
+            plt.show()
+        if SAVE_PLOT:
+            chart.savefig('{}.png'.format(self.name))
 
     def resolve(self):
         """Resolve the battle until there are no more events or one side is eliminated."""
@@ -841,6 +850,10 @@ class Battle:
             {"a_staying_power": self.side_a_staying_power,
              "b_staying_power": self.side_b_staying_power
              })
+
+        # If the model is set to either draw or save a plot, call the corresponding function:
+        if DRAW_PLOT or SAVE_PLOT:
+            self.strength_plot()
 
 
 #################
@@ -965,4 +978,3 @@ def load_battle(battle_id_string):
 cocos = load_battle("cocos")
 cocos.resolve()
 print(cocos.battle_data)
-cocos.strength_plot()
