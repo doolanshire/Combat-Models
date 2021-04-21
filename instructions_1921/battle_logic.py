@@ -120,9 +120,8 @@ def parse_battle_events(battle_id_string):
                 target_range = float(row[9]) * 1000
                 start = int(row[1])
                 duration = int(row[2])
-                # Revise these two later.
                 salvo_size = None
-                modifier = 1
+                modifier = float(row[14])
 
                 side_a_events.append((firer, target, target_range, start, duration, salvo_size, modifier))
 
@@ -139,9 +138,8 @@ def parse_battle_events(battle_id_string):
                 target_range = float(row[9]) * 1000
                 start = int(row[1])
                 duration = int(row[2])
-                # Revise these two later.
                 salvo_size = None
-                modifier = 1
+                modifier = float(row[14])
 
                 side_b_events.append((firer, target, target_range, start, duration, salvo_size, modifier))
 
