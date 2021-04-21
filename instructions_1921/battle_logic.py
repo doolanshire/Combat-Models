@@ -731,7 +731,7 @@ class Side:
         self.fire_events.append(new_event)
 
     def __str__(self):
-        group_names = [group.name for group in self.groups]
+        group_names = [group for group in self.groups]
         group_names_string = ", ".join(group_names)
         strength = self.status * 100
         side_string = "{} ({})\nRemaining strength: {}%".format(self.name, group_names_string, strength)
@@ -874,6 +874,16 @@ class Battle:
              "a_staying_power": self.side_a_staying_power,
              "b_staying_power": self.side_b_staying_power
              })
+
+        # If the model is set to output battle reports to the console, print out the battle information and results.
+        if CONSOLE_OUTPUT:
+            battle_date = parse_battle_cfg(self.battle_id_string)["General"]["date"]
+            print("{}, {}".format(self.name, battle_date))
+            print(self.battle_data)
+            print(self.side_a)
+            print(self.side_b)
+            print("Battle duration: {} minutes".format(self.time_pulse))
+
         # If the model is set to export battle reports to CSV, call the corresponding function.
         if REPORT:
             self.export_battle_reports()
@@ -967,7 +977,9 @@ def load_battle(battle_id_string):
 
     # Create the two belligerent sides.
     # Begin with side A.
+    # Set the name of the side from the config file.
     side_name = parse_battle_cfg("cocos")["Sides"]["side_a"]
+    # Initialise and populate the group dictionary.
     side_a_groups = {}
     for group in side_a_group_dictionary:
         group_name = group
@@ -975,10 +987,13 @@ def load_battle(battle_id_string):
         group_type = side_a_group_dictionary[group][1]
         side_a_groups[group] = Group(group_name, group_members, group_type)
 
+    # Create the Side object for side A.
     side_a = Side(side_name, side_a_groups)
 
     # Now with side B.
+    # Set the name of the side from the config file.
     side_name = parse_battle_cfg("cocos")["Sides"]["side_b"]
+    # Initialise and populate the group dictionary.
     side_b_groups = {}
     for group in side_b_group_dictionary:
         group_name = group
@@ -986,6 +1001,7 @@ def load_battle(battle_id_string):
         group_type = side_b_group_dictionary[group][1]
         side_b_groups[group] = Group(group_name, group_members, group_type)
 
+    # Create the Side object for side B.
     side_b = Side(side_name, side_b_groups)
 
     # Register the fire events.
@@ -1004,4 +1020,3 @@ def load_battle(battle_id_string):
 
 cocos = load_battle("cocos")
 cocos.resolve()
-print(cocos.battle_data)
