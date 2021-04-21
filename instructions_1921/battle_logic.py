@@ -11,6 +11,7 @@ import configparser
 import csv
 import datetime
 import matplotlib.pyplot as plt
+import os
 import pandas as pd
 import seaborn as sns
 
@@ -782,6 +783,8 @@ class Battle:
         self.time_pulse = 0
         # The battle_data attribute gets assigned a Pandas dataframe once the battle is resolved.
         self.battle_data = None
+        # Build the path for battle report files.
+        self.report_path = 'reports/{}/'.format(self.battle_id_string)
 
         # Build the timelines for both sides from their event lists.
 
@@ -840,7 +843,19 @@ class Battle:
         if DRAW_PLOT:
             plt.show()
         if SAVE_PLOT:
-            chart.savefig('{}.png'.format(self.name))
+            # Check whether the report directory exists, and create it if it does not.
+            if not os.path.exists(self.report_path):
+                os.makedirs(self.report_path)
+            chart.savefig('{}{}.png'.format(self.report_path, self.name))
+
+    def export_battle_reports(self):
+        # Check whether the report directory exists, and create it if it does not.
+        if not os.path.exists(self.report_path):
+            os.makedirs(self.report_path)
+
+        # Save the side strength dataframe to a CSV file.
+        strength_data_file_path = '{}{}_strength_report.csv'.format(self.report_path, self.battle_id_string)
+        self.battle_data.to_csv(strength_data_file_path, header=True, index=False)
 
     def resolve(self):
         """Resolve the battle until there are no more events or one side is eliminated."""
@@ -854,16 +869,16 @@ class Battle:
         for _ in range(self.time_pulse):
             time_stamp = time_stamp + datetime.timedelta(minutes=1)
             time_stamps.append(time_stamp.strftime('%H:%M'))
-        print(len(time_stamps))
         self.battle_data = pd.DataFrame(
             {"time": time_stamps,
              "a_staying_power": self.side_a_staying_power,
              "b_staying_power": self.side_b_staying_power
              })
+        # If the model is set to export battle reports to CSV, call the corresponding function.
+        if REPORT:
+            self.export_battle_reports()
 
-        # Make time stamp labels for the dataframe.
-
-        # If the model is set to either draw or save a plot, call the corresponding function:
+        # If the model is set to either draw or save a plot, call the corresponding function.
         if DRAW_PLOT or SAVE_PLOT:
             self.strength_plot()
 
