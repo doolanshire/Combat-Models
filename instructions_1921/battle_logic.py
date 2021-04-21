@@ -9,6 +9,7 @@
 
 import configparser
 import csv
+import datetime
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
@@ -764,15 +765,16 @@ class Battle:
         all fire events have been executed.
     """
 
-    def __init__(self, name, side_a, side_b):
+    def __init__(self, battle_id_string, name, side_a, side_b):
+        self.battle_id_string = battle_id_string
         self.name = name
         self.side_a = side_a
         self.side_b = side_b
         # Determine the battle duration.
-        battle_duration = max(self.side_a.latest_event, self.side_b.latest_event)
+        self.battle_duration = max(self.side_a.latest_event, self.side_b.latest_event)
         # Initialise fire event timelines for both sides.
-        self.side_a_timeline = [[] for _ in range(battle_duration)]
-        self.side_b_timeline = [[] for _ in range(battle_duration)]
+        self.side_a_timeline = [[] for _ in range(self.battle_duration)]
+        self.side_b_timeline = [[] for _ in range(self.battle_duration)]
         # Initialise the staying power plot for both sides.
         self.side_a_staying_power = [self.side_a.staying_power]
         self.side_b_staying_power = [self.side_b.staying_power]
@@ -829,7 +831,7 @@ class Battle:
     def strength_plot(self):
         """Produce a chart of the relative fighting strengths of both sides during the battle."""
         sns.set_theme()
-        plt.plot(self.battle_data)
+        self.battle_data.plot(y=['a_staying_power', 'b_staying_power'])
         plt.title(self.name, pad=15, fontweight='bold')
         plt.ylabel('Staying power', labelpad=5)
         plt.xlabel('Minute', labelpad=5)
@@ -846,10 +848,20 @@ class Battle:
                 and self.side_a.hit_points > 0 and self.side_b.hit_points > 0:
             self.advance_pulse()
         # Join all the battle information into Pandas dataframes.
+        starting_time = parse_battle_cfg(self.battle_id_string)['General']['time']
+        time_stamp = datetime.datetime.strptime(starting_time, '%H:%M')
+        time_stamps = [time_stamp.strftime('%H:%M')]
+        for _ in range(self.time_pulse):
+            time_stamp = time_stamp + datetime.timedelta(minutes=1)
+            time_stamps.append(time_stamp.strftime('%H:%M'))
+        print(len(time_stamps))
         self.battle_data = pd.DataFrame(
-            {"a_staying_power": self.side_a_staying_power,
+            {"time": time_stamps,
+             "a_staying_power": self.side_a_staying_power,
              "b_staying_power": self.side_b_staying_power
              })
+
+        # Make time stamp labels for the dataframe.
 
         # If the model is set to either draw or save a plot, call the corresponding function:
         if DRAW_PLOT or SAVE_PLOT:
@@ -970,7 +982,7 @@ def load_battle(battle_id_string):
 
     # Create the Battle object and return it.
     battle_name = parse_battle_cfg(battle_id_string)["General"]["name"]
-    battle = Battle(battle_name, side_a, side_b)
+    battle = Battle(battle_id_string, battle_name, side_a, side_b)
 
     return battle
 
