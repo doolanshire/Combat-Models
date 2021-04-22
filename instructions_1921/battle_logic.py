@@ -399,12 +399,16 @@ class Ship:
         offensive capabilities.
     """
 
-    def __init__(self, name, hull_class, main_armament_type, main_armament_count, main_armament_broadside):
+    def __init__(self, name, hull_class, main_armament_type, main_armament_count, main_armament_broadside,
+                 main_armament_bow, main_armament_stern, end_arc):
         self.name = name
         self.hull_class = hull_class
         self.main_armament_type = main_armament_type
         self.main_armament_count = int(main_armament_count)
         self.main_armament_broadside = int(main_armament_broadside)
+        self.main_armament_bow = int(main_armament_bow)
+        self.main_armament_stern = int(main_armament_stern)
+        self.end_arc = int(end_arc)
         self.staying_power = self.main_armament_count
         # Calculate the staying power multiplier for battleships based on main gun calibre.
         if self.hull_class in ("BB", "OBB"):
@@ -955,8 +959,12 @@ def load_battle(battle_id_string):
         main_armament_type = Gun(*gun_table_dictionary[gun_table][gun_designation])
         main_armament_count = int(side_a_fleet_dictionary[ship_name][15])
         main_armament_broadside = int(side_a_fleet_dictionary[ship_name][16])
+        main_armament_bow = int(side_a_fleet_dictionary[ship_name][17])
+        main_armament_stern = int(side_a_fleet_dictionary[ship_name][18])
+        main_armament_end_arc = int(side_a_fleet_dictionary[ship_name][19])
         side_a_ship_dictionary[ship_name] = Ship(name, hull_class, main_armament_type, main_armament_count,
-                                                 main_armament_broadside)
+                                                 main_armament_broadside, main_armament_bow, main_armament_stern,
+                                                 main_armament_end_arc)
 
     # Initialise the ship dictionary for side B.
     side_b_ship_dictionary = {}
@@ -970,8 +978,12 @@ def load_battle(battle_id_string):
         main_armament_type = Gun(*gun_table_dictionary[gun_table][gun_designation])
         main_armament_count = side_b_fleet_dictionary[ship_name][15]
         main_armament_broadside = side_b_fleet_dictionary[ship_name][16]
+        main_armament_bow = int(side_b_fleet_dictionary[ship_name][17])
+        main_armament_stern = int(side_b_fleet_dictionary[ship_name][18])
+        main_armament_end_arc = int(side_b_fleet_dictionary[ship_name][19])
         side_b_ship_dictionary[ship_name] = Ship(name, hull_class, main_armament_type, main_armament_count,
-                                                 main_armament_broadside)
+                                                 main_armament_broadside, main_armament_bow, main_armament_stern,
+                                                 main_armament_end_arc)
 
     # Create the two belligerent sides.
     # Begin with side A.
