@@ -120,10 +120,10 @@ def parse_battle_events(battle_id_string):
                 target_range = float(row[9]) * 1000
                 start = int(row[1])
                 duration = int(row[2])
-                salvo_size = None
+                target_bearing = int(row[10])
                 modifier = float(row[14])
 
-                side_a_events.append((firer, target, target_range, start, duration, salvo_size, modifier))
+                side_a_events.append((firer, target, target_range, start, duration, target_bearing, modifier))
 
     # Build the event list for side B.
     side_b_events = []
@@ -138,10 +138,10 @@ def parse_battle_events(battle_id_string):
                 target_range = float(row[9]) * 1000
                 start = int(row[1])
                 duration = int(row[2])
-                salvo_size = None
+                target_bearing = int(row[10])
                 modifier = float(row[14])
 
-                side_b_events.append((firer, target, target_range, start, duration, salvo_size, modifier))
+                side_b_events.append((firer, target, target_range, start, duration, target_bearing, modifier))
 
     return side_a_events, side_b_events
 
@@ -400,7 +400,7 @@ class Ship:
     """
 
     def __init__(self, name, hull_class, main_armament_type, main_armament_count, main_armament_broadside,
-                 main_armament_bow, main_armament_stern, end_arc):
+                 main_armament_bow, main_armament_stern, main_armament_end_arc):
         self.name = name
         self.hull_class = hull_class
         self.main_armament_type = main_armament_type
@@ -408,7 +408,7 @@ class Ship:
         self.main_armament_broadside = int(main_armament_broadside)
         self.main_armament_bow = int(main_armament_bow)
         self.main_armament_stern = int(main_armament_stern)
-        self.end_arc = int(end_arc)
+        self.main_armament_end_arc = int(main_armament_end_arc)
         self.staying_power = self.main_armament_count
         # Calculate the staying power multiplier for battleships based on main gun calibre.
         if self.hull_class in ("BB", "OBB"):
@@ -460,7 +460,7 @@ class Ship:
         self.status = 1
         self.hits_received = {}
 
-    def fire(self, target, target_range, distribution=1, salvo_size=None, modifier=1):
+    def fire(self, target, target_range, distribution=1, bearing=90, modifier=1):
         """Fire at a target ship. This function records the hits received by the target, then converts them to
         equivalent 6-inch or 14-inch hits and applies the resulting damage.
 
@@ -478,9 +478,19 @@ class Ship:
 
         firing_caliber = self.main_armament_type.caliber
         base_to_hit = self.main_armament_type.return_to_hit(target_range)
-        # Unless otherwise specified, the ship is assumed to fire a full broadside
-        if salvo_size is None:
+
+        # Calculate how many guns are bearing on the target.
+        # Begin by normalising the angle.
+        if bearing > 180:
+            bearing = 180 - (bearing % 180)
+        # Check the arc within which the target lies.
+        if bearing < self.main_armament_end_arc:
+            salvo_size = self.main_armament_bow
+        elif bearing > (180 - self.main_armament_end_arc):
+            salvo_size = self.main_armament_stern
+        else:
             salvo_size = self.main_armament_broadside
+
         # Calculate the number of hits in a one-minute pulse taking all modifiers into account
         # Check if any special rules apply due to target size
         # Turret guns against light division
@@ -709,7 +719,7 @@ class Side:
         self.hit_points = sum(group.hit_points for group in self.groups.values())
         self.status = self.hit_points / self.staying_power
 
-    def register_fire_event(self, firer, target, target_range, start, duration, salvo_size=None, modifier=1):
+    def register_fire_event(self, firer, target, target_range, start, duration, target_bearing=90, modifier=1):
         """Add a fire event to the side. Fire events are defined by:
                 - firer: the index of the group that is firing (0 = first group, 1 = second group...)
                 - target_ the index of the target group in the enemy side (0 = first, 1 = second...)
@@ -727,7 +737,7 @@ class Side:
             self.latest_event = start + duration + 1
 
         # Make a tuple representing all the event's parameters
-        new_event = (firer, target, target_range, start, start + duration, salvo_size, modifier)
+        new_event = (firer, target, target_range, start, start + duration, target_bearing, modifier)
 
         # Append the tuple to the list of fire events for the side
         self.fire_events.append(new_event)
@@ -807,7 +817,7 @@ class Battle:
             for event in self.side_b.fire_events:
                 # Select the minutes of the timeline between the event's start and its end.
                 for minute in range(event[3], event[4]):
-                    # Add to each minute a tuple containing the firer, target, range, salvo size and fire modifier
+                    # Add to each minute a tuple containing the firer, target, range, bearing and fire modifier
                     self.side_b_timeline[minute].append((event[0], event[1], event[2], event[5], event[6]))
 
     def advance_pulse(self):
