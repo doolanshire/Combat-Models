@@ -8,8 +8,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 
-file_name = '6-in-50_percent_top.csv'
-file_directory = 'fire_effect_tables/1922/6-in-50/'
+file_name = '6-in-53_percent_kite.csv'
+file_directory = 'fire_effect_tables/1922/6-in-53/'
 file_path = file_directory + file_name
 
 gun_data = pd.read_csv(file_path, index_col='range', na_values="--", dtype=float)
