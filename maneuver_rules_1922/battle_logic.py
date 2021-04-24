@@ -11,6 +11,24 @@ FIRE_EFFECT_TABLES_EDITION = "1922"
 
 
 class Gun:
+    """A naval gun. All parameters are loaded from external data files upon object creation. The only input needed is
+    the gun's designation, which follows the format:
+
+    [caliber]-in-[length]
+
+    For example, '6-in-50' or '13.5-in-45'.
+
+    The class attributes are:
+    - designation: the gun's designation as explained above.
+    - projectile_weight: the projectile weight in lbs.
+    - muzzle_velocity: the gun's muzzle velocity in feet per second.
+    - maximum_range: the gun's maximum range in thousands of yards.
+    - hit_percentage: a dictionary containing Pandas dataframes. Holds to-hit chances at different ranges (at 2000-yard
+    intervals) and for different spot types (top, kite or plane).
+    - rate_of_fire: a Pandas dataframe with the expected rates of fire of any given gun when firing at different ranges
+    (also at 2000-yard intervals).
+    """
+
     def __init__(self, gun_designation):
         self.designation = gun_designation
         # Define the path for the gun's fire effect tables
@@ -77,7 +95,7 @@ class Gun:
         return hits
 
 
-test_gun = Gun("6-in-53")
+test_gun = Gun("6-in-50")
 print(test_gun.return_hit_percentage("large", 16, "top"))
 print(test_gun.return_rate_of_fire(16))
 print(test_gun.return_stochastic_hits("large", 16, "top"))
