@@ -1,11 +1,8 @@
-"""
-###########################################
-## NAVAL WAR COLLEGE MANEUVER RULES 1922 ##
-###########################################
-A collection of helper functions and tools
-to make the preparation and conduct of the
-game easier
-"""
+#########################################
+# NAVAL WAR COLLEGE MANEUVER RULES 1922 #
+#########################################
+# A collection of helper functions and tools to make the preparation and conduct of the game easier.
+
 
 import pandas as pd
 
