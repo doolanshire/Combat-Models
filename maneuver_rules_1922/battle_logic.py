@@ -16,6 +16,16 @@ class Gun:
         # Define the path for the gun's fire effect tables
         fire_effect_tables_path = "fire_effect_tables/{}/{}/".format(FIRE_EFFECT_TABLES_EDITION, gun_designation)
 
+        # GENERAL DATA
+
+        # Load the gun types dataframe.
+        gun_types_path = "fire_effect_tables/{}/gun_types.csv".format(FIRE_EFFECT_TABLES_EDITION)
+        general_data = pd.read_csv(gun_types_path, index_col="designation", na_values="--")
+        # Fill out the gun's general data.
+        self.projectile_weight = int(general_data["projectile_weight"][self.designation])
+        self.muzzle_velocity = int(general_data["muzzle_velocity"][self.designation])
+        self.maximum_range = int(general_data["maximum_range"][self.designation])
+
         # HIT PERCENTAGE
 
         # Define the paths for the hit percentage tables under different spot conditions.
@@ -41,6 +51,8 @@ class Gun:
 
     def return_hit_percentage(self, target_size, target_range, spot_type):
         target_range = int(target_range)
+        if target_range > self.maximum_range:
+            return 0
         if not target_range % 2:
             return self.hit_percentage[spot_type][target_size][target_range]
         else:
@@ -49,6 +61,8 @@ class Gun:
             return (shorter_range + longer_range) / 2
 
     def return_rate_of_fire(self, target_range, move_duration=1):
+        if target_range > self.maximum_range:
+            return 0
         if not target_range % 2:
             return self.rate_of_fire[self.designation][target_range] * move_duration
         else:
