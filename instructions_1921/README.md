@@ -11,32 +11,55 @@ The aim of this project is implementing the fire and damage rules of the Tactica
 
 Movement is not simulated directly – instead, the user introduces the firing intervals and targets for each ship group and the distances between them throughout a battle. The program then computes the exchange of fire accordingly.
 
-Engagement information will eventually be stored in external CSV files so that different battles may be played with little effort.
+All of the information for the model (gunnery data, ship specifications, orders of battle, engagement events etc.) is loaded from external, human-readable files.
 
-## Done so far
 
 #### Program files:
 
-**guns\_and\_ships.py**: implements the _Gun_, _Ship_, _Group_, _Side_ and _Battle_ classes, and their associated methods.
+**battle_logic.py**: the main program file, containing all the logic of the model implementation.
 
-**plot.py**: a simple function to plot attrition over time.
+**model_settings.cfg**: a configuration file determining the general behaviour of the model.
 
-**interpolate.py**: this is the script used to create the *interpolated* versions of the gun data tables below. It is not needed to simulate battles, but it is useful in creating gun data table entries.
 
-#### Data files:
+#### Data files and directories:
 
-**capital\_ship\_guns.csv**: containing information on capital ship guns (16 in, 15 in I, 13.5 in V, and 12 in XI).
+##### battle_data/
 
-**light\_cruiser\_guns.csv**: containing information on light cruiser guns (7.5 in VI, and 6 in XII).
+All engagement source files stored here. Battles are assigned a unique ID string (like *'cocos'* or *'coronel'*) and all their data files are placed in a directory bearing that name.
 
-**destroyer\_guns.csv**: containing information on light cruiser guns (4.7 in I and 4 in V).
+##### battle_data/[battle ID string]
 
-**secondary\_guns.csv**: containing information on secondary guns (6 in XII, 6 in VII, 5.5 in, 4 in IX, 4 in VII).
+* **[battle ID string].cfg**: a configuration file containing the general data of an engagement, such as its date, location, visibility, sea state, etc. Also determines the file paths of the fleet lists to use as source for the battle's ship roster.
 
-The *interpolated* versions of each data file have three additional columns. These columns contain the terms needed for each gun to calculate hit chances at arbitrary ranges using a polynomial regression model.
+* **side_a_groups.csv**: information on the groups of ships in side A, such as the group's name, the ships forming it, and whether it's a light division group or a main battle group. This latter distinction is relevant only for purposes of battle strength comparisons and is not actually needed by the model.
+
+* **side_b_groups.csv**: see above.
+
+* **side_a_evemts**: all battle events indicating side A's actions. Which groups shoot at which and at what range, when the firing starts and how long it lasts, and any modifiers to accuracy the user might want to add,
+
+* **side_b_events**: see above.
+
+##### fleets/
+
+This directory contains the fleet lists used by the model, which hold the specifications of every ship used in every battle. All ships are unique and identified by their name, so there cannot be (for example) two HMS Orions in the same battle. If the user needs an exact copy of a given ship for whatever reason, they must add a new entry for it in the fleet lists and give it a unique name.
+
+##### gun_data/
+
+The gunnery tables for all guns described in the Instructions.
+
+* **capital\_ship\_guns.csv**: containing information on capital ship guns (16 in, 15 in I, 13.5 in I and 12 in XI).
+
+* **light\_cruiser\_guns.csv**: containing information on light cruiser guns (7.5 in VI, and 6 in XII).
+
+* **destroyer\_guns.csv**: containing information on light cruiser guns (4.7 in I and 4 in V).
+
+* **secondary\_guns.csv**: containing information on secondary guns (6 in XII, 6 in VII, 5.5 in, 4 in IX, 4 in VII).
+
+A ***helper_functions*** directory contains some modules which are not necessary to run the model, but can be useful to prepare data for it.
+
+##### reports/
+
+When the relevant *model_settings.cfg* flags are set to *True*, the model will generate reports for each battle it simulates. These reports will be stored here, inside a sub-directory named after the battle's ID string.
 
 ## To do
-* Fix the *salvo size* parameter to represent the ratio of guns firing rather than an absolute number. The latter does
-  not make a lot of sense when handling groups of different ship classes.
-* Implement functions to read and parse ship data from external files.
-* Design and implement engagement input files – essentially order of battle and fire events for each side.
+* Make the model generate verbose per-minute reports of all combat actions, if only for debugging purposes.
