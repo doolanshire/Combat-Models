@@ -144,6 +144,14 @@ class Ship:
 
         return salvo_size
 
+    def return_base_hits(self, target_size, target_range, target_bearing, spot_type, move_duration=1):
+        salvo_size = self.calculate_primary_salvo_size(target_bearing)
+        rate_of_fire = self.primary_armament.return_rate_of_fire(target_range, move_duration)
+        base_to_hit = self.primary_armament.return_hit_percentage(target_size, target_range, spot_type) / 100
+        base_hits = salvo_size * rate_of_fire * base_to_hit
+
+        return base_hits
+
 
 test_gun = Gun("6-in-50")
 print(test_gun.return_hit_percentage("large", 16, "top"))
@@ -153,4 +161,4 @@ print(test_gun.return_stochastic_hits("large", 16, "top"))
 sydney = Ship("Sydney", "CL", "small", 3.17, 3, 2, "6-in-50", 8, 4, 2, 2, 45, "NA", "NA", "NA", "NA", "NA", "NA",
               "B 21 in", "S", 2, 2)
 
-print(sydney.calculate_primary_salvo_size(170))
+print(sydney.return_base_hits("small", 9, 90, "top"))
