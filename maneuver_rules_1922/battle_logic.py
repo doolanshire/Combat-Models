@@ -100,9 +100,9 @@ class Gun:
 
 class Ship:
     def __init__(self, name, hull_class, size, life, side, deck, primary_fire_effect_table, primary_total,
-                 primary_side, primary_bow, primary_stern, primary_end_arc, secondary_fire_effect_table,
-                 secondary_total, secondary_side, secondary_bow, secondary_stern, secondary_end_arc, torpedoes_type,
-                 torpedoes_mount, torpedoes_total, torpedoes_size):
+                 primary_broadside, primary_bow, primary_stern, primary_end_arc, secondary_fire_effect_table,
+                 secondary_total, secondary_broadside, secondary_bow, secondary_stern, secondary_end_arc,
+                 torpedoes_type, torpedoes_mount, torpedoes_total, torpedoes_size):
         self.name = name
         self.hull_class = hull_class
         self.size = size
@@ -111,23 +111,38 @@ class Ship:
         self.deck = deck
         self.primary_armament = Gun(primary_fire_effect_table)
         self.primary_total = primary_total
-        self.primary_side = primary_side
+        self.primary_broadside = primary_broadside
         self.primary_bow = primary_bow
         self.primary_stern = primary_stern
         self.primary_end_arc = primary_end_arc
+        # Skip secondary battery Gun creation if the ship has no significant secondary armament.
         if secondary_fire_effect_table != "NA":
             self.secondary_armament = Gun(secondary_fire_effect_table)
         else:
             self.secondary_armament = "NA"
         self.secondary_total = secondary_total
-        self.secondary_side = secondary_side
+        self.secondary_broadside = secondary_broadside
         self.secondary_bow = secondary_bow
         self.secondary_stern = secondary_stern
         self.secondary_end_arc = secondary_end_arc
+        # Torpedo tubes might be implemented in the future.
         self.torpedoes_type = torpedoes_type
         self.torpedoes_mount = torpedoes_mount
         self.torpedoes_total = torpedoes_total
         self.torpedoes_size = torpedoes_size
+
+    def calculate_primary_salvo_size(self, target_bearing):
+        if target_bearing > 180:
+            target_bearing = 180 - (target_bearing % 180)
+        # Check the arc within which the target lies.
+        if target_bearing < self.primary_end_arc:
+            salvo_size = self.primary_bow
+        elif target_bearing > (180 - self.primary_end_arc):
+            salvo_size = self.primary_stern
+        else:
+            salvo_size = self.primary_broadside
+
+        return salvo_size
 
 
 test_gun = Gun("6-in-50")
@@ -135,6 +150,7 @@ print(test_gun.return_hit_percentage("large", 16, "top"))
 print(test_gun.return_rate_of_fire(16))
 print(test_gun.return_stochastic_hits("large", 16, "top"))
 
-sydney = Ship("Sydney", "CL", "small", 3.17, 3, 2, "6-in-50", 8, 4, 2, 2, 45, "NA", "NA", "NA", "NA", "NA", "NA", "B 21 in", "S", 2, 2)
+sydney = Ship("Sydney", "CL", "small", 3.17, 3, 2, "6-in-50", 8, 4, 2, 2, 45, "NA", "NA", "NA", "NA", "NA", "NA",
+              "B 21 in", "S", 2, 2)
 
-print(sydney.primary_armament.return_stochastic_hits("large", 16, "top"))
+print(sydney.calculate_primary_salvo_size(170))
