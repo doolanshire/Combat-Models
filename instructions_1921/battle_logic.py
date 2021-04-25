@@ -562,6 +562,29 @@ class Ship:
         self.starting_hit_points = self.hit_points
         self.status = self.hit_points / self.staying_power
 
+    def return_firepower(self, target_range, firing_arc="broadside"):
+        """Return the firepower (15-inch or 6-inch hit equivalents) at a given range and firing arc.
+
+        Attributes:
+            - target_range: the range to the target in thousands of yards (int).
+            - firing_arc: bow, stern, or broadside. Defaults to broadside.
+        """
+
+        base_to_hit = self.main_armament_type.return_to_hit(target_range)
+
+        if firing_arc == "bow":
+            salvo_size = self.main_armament_bow
+        elif firing_arc == "stern":
+            salvo_size = self.main_armament_stern
+        else:
+            salvo_size = self.main_armament_broadside
+
+        hits = base_to_hit * salvo_size
+
+        equivalent_hits = hits * self.main_armament_type.return_damage_conversion_factor()
+
+        return equivalent_hits
+
     def __str__(self):
         """String override method. Return a summary of a ship's stats"""
         name = self.name
@@ -860,6 +883,63 @@ class Battle:
                 os.makedirs(self.report_path)
             chart.savefig('{}{}.png'.format(self.report_path, self.name))
 
+    def firepower_comparison(self, side_a_groups, side_b_groups):
+        """Compare the firepower of specific groups of the belligerent sides at different distances.
+        """
+
+        # Determine the groups' maximum range.
+        max_range = 0
+        group_type = self.side_a.groups[side_a_groups[0]].group_type
+
+        for group in side_a_groups:
+            if self.side_a.groups[group].group_type != group_type:
+                raise ValueError("Cannot compare firepower of groups of different types.")
+            for ship in self.side_a.groups[group].members:
+                if ship.main_armament_type.max_range > max_range:
+                    max_range = ship.main_armament_type.max_range
+
+        for group in side_b_groups:
+            if self.side_b.groups[group].group_type != group_type:
+                raise ValueError("Cannot compare firepower of groups of different types.")
+            for ship in self.side_b.groups[group].members:
+                if ship.main_armament_type.max_range > max_range:
+                    max_range = ship.main_armament_type.max_range
+
+        side_a_firepower = []
+        side_b_firepower = []
+        range_indices = []
+
+        max_range = int((max_range // 1000) * 1000)
+
+        for i in range(1000, max_range + 1000, 1000):
+            range_indices.append(i)
+            total_a_firepower_at_range = 0
+            for group in side_a_groups:
+                for ship in self.side_a.groups[group].members:
+                    total_a_firepower_at_range += ship.return_firepower(i)
+            side_a_firepower.append(total_a_firepower_at_range)
+
+            total_b_firepower_at_range = 0
+            for group in side_b_groups:
+                for ship in self.side_b.groups[group].members:
+                    total_b_firepower_at_range += ship.return_firepower(i)
+            side_b_firepower.append(total_b_firepower_at_range)
+
+        firepower_dict = {"range": range_indices, self.side_a.name: side_a_firepower,
+                          self.side_b.name: side_b_firepower}
+        firepower_dataframe = pd.DataFrame.from_dict(firepower_dict, dtype=float)
+        firepower_dataframe.set_index("range")
+        sns.set_theme()
+        firepower_dataframe.plot(y=[1, 2])
+        plt.title("Firepower comparison", pad=15, fontweight="bold")
+        if group_type == "light":
+            equivalent = 6
+        else:
+            equivalent = 15
+        plt.ylabel("{}-inch hits".format(equivalent), labelpad=10)
+        plt.xlabel("Range in Kyd", labelpad=10)
+        plt.show()
+
     def export_battle_reports(self):
         # Check whether the report directory exists, and create it if it does not.
         if not os.path.exists(self.report_path):
@@ -1040,3 +1120,4 @@ def load_battle(battle_id_string):
 
 cocos = load_battle("cocos")
 cocos.resolve()
+cocos.firepower_comparison(["Sydney"], ["Emden"])
