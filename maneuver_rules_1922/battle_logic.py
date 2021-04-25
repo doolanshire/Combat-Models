@@ -73,22 +73,22 @@ class Gun:
         if target_range > self.maximum_range:
             return 0
         if not target_range % 2:
-            return self.hit_percentage[spot_type][target_size][target_range]
+            return self.hit_percentage[spot_type][target_size][target_range] / 100
         else:
             shorter_range = self.hit_percentage[spot_type][target_size][target_range - 1]
             longer_range = self.hit_percentage[spot_type][target_size][target_range + 1]
-            return (shorter_range + longer_range) / 2
+            return (shorter_range + longer_range) / 2 / 100
 
     def return_rate_of_fire(self, target_range, move_duration=1):
         """Returns the rate of fire for the gun at a given range."""
         if target_range > self.maximum_range:
             return 0
         if not target_range % 2:
-            return self.rate_of_fire[self.designation][target_range] * move_duration
+            return self.rate_of_fire[self.designation][target_range] / 3 * move_duration
         else:
             shorter_range = self.rate_of_fire[self.designation][target_range - 1]
             longer_range = self.rate_of_fire[self.designation][target_range + 1]
-            return ((shorter_range + longer_range) / 2) * move_duration
+            return ((shorter_range + longer_range) / 2) / 3 * move_duration
 
 
 class Ship:
@@ -143,7 +143,7 @@ class Ship:
     def return_base_hits(self, target_size, target_range, target_bearing, spot_type, move_duration=1):
         salvo_size = self.calculate_primary_salvo_size(target_bearing)
         rate_of_fire = self.primary_armament.return_rate_of_fire(target_range, move_duration)
-        base_to_hit = self.primary_armament.return_hit_percentage(target_size, target_range, spot_type) / 100
+        base_to_hit = self.primary_armament.return_hit_percentage(target_size, target_range, spot_type)
         base_hits = salvo_size * rate_of_fire * base_to_hit
 
         return base_hits
@@ -154,22 +154,20 @@ class Ship:
         total_shots = (salvo_size * rate_of_fire) + self.remainder_hits
         self.remainder_hits = total_shots - int(total_shots)
         total_shots = int(total_shots)
-        base_to_hit = self.primary_armament.return_hit_percentage(target_size, target_range, spot_type) / 100
+        base_to_hit = self.primary_armament.return_hit_percentage(target_size, target_range, spot_type)
         hits = sum([1 for _ in range(total_shots) if random.random() < base_to_hit])
 
         return hits
 
 
 test_gun = Gun("6-in-50")
-print(test_gun.return_hit_percentage("large", 16, "top"))
-print(test_gun.return_rate_of_fire(16))
 
 sydney = Ship("Sydney", "CL", "small", 3.17, 3, 2, "6-in-50", 8, 4, 2, 2, 45, "NA", "NA", "NA", "NA", "NA", "NA",
               "B 21 in", "S", 2, 2)
 
 print(sydney.return_base_hits("small", 9, 90, "top"))
 results = []
-for _ in range(100):
+for _ in range(1000):
     results.append(sydney.return_stochastic_hits("small", 9, 90, "top"))
 
 print(sum(results)/len(results))
