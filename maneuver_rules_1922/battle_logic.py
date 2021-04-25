@@ -90,13 +90,6 @@ class Gun:
             longer_range = self.rate_of_fire[self.designation][target_range + 1]
             return ((shorter_range + longer_range) / 2) * move_duration
 
-    def return_stochastic_hits(self, target_size, target_range, spot_type):
-        """This function is temporary."""
-        hit_rate = self.return_hit_percentage(target_size, target_range, spot_type) / 100
-        rate_of_fire = int(self.return_rate_of_fire(target_range))
-        hits = sum([1 for _ in range(rate_of_fire) if random.random() < hit_rate])
-        return hits
-
 
 class Ship:
     def __init__(self, name, hull_class, size, life, side, deck, primary_fire_effect_table, primary_total,
@@ -131,6 +124,9 @@ class Ship:
         self.torpedoes_total = torpedoes_total
         self.torpedoes_size = torpedoes_size
 
+        # Remainder hits from previous salvo. Used in the stochastic model.
+        self.remainder_hits = 0
+
     def calculate_primary_salvo_size(self, target_bearing):
         if target_bearing > 180:
             target_bearing = 180 - (target_bearing % 180)
@@ -152,13 +148,28 @@ class Ship:
 
         return base_hits
 
+    def return_stochastic_hits(self, target_size, target_range, target_bearing, spot_type, move_duration=1):
+        salvo_size = self.calculate_primary_salvo_size(target_bearing)
+        rate_of_fire = self.primary_armament.return_rate_of_fire(target_range, move_duration)
+        total_shots = (salvo_size * rate_of_fire) + self.remainder_hits
+        self.remainder_hits = total_shots - int(total_shots)
+        total_shots = int(total_shots)
+        base_to_hit = self.primary_armament.return_hit_percentage(target_size, target_range, spot_type) / 100
+        hits = sum([1 for _ in range(total_shots) if random.random() < base_to_hit])
+
+        return hits
+
 
 test_gun = Gun("6-in-50")
 print(test_gun.return_hit_percentage("large", 16, "top"))
 print(test_gun.return_rate_of_fire(16))
-print(test_gun.return_stochastic_hits("large", 16, "top"))
 
 sydney = Ship("Sydney", "CL", "small", 3.17, 3, 2, "6-in-50", 8, 4, 2, 2, 45, "NA", "NA", "NA", "NA", "NA", "NA",
               "B 21 in", "S", 2, 2)
 
 print(sydney.return_base_hits("small", 9, 90, "top"))
+results = []
+for _ in range(100):
+    results.append(sydney.return_stochastic_hits("small", 9, 90, "top"))
+
+print(sum(results)/len(results))
