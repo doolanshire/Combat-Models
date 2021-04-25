@@ -68,6 +68,7 @@ class Gun:
         self.rate_of_fire = pd.read_csv(rates_of_fire_path, index_col='range', na_values="--", dtype=float)
 
     def return_hit_percentage(self, target_size, target_range, spot_type):
+        """Returns the hit percentage of the gun for a given target size, range and spot type."""
         target_range = int(target_range)
         if target_range > self.maximum_range:
             return 0
@@ -79,6 +80,7 @@ class Gun:
             return (shorter_range + longer_range) / 2
 
     def return_rate_of_fire(self, target_range, move_duration=1):
+        """Returns the rate of fire for the gun at a given range."""
         if target_range > self.maximum_range:
             return 0
         if not target_range % 2:
@@ -89,13 +91,50 @@ class Gun:
             return ((shorter_range + longer_range) / 2) * move_duration
 
     def return_stochastic_hits(self, target_size, target_range, spot_type):
+        """This function is temporary."""
         hit_rate = self.return_hit_percentage(target_size, target_range, spot_type) / 100
         rate_of_fire = int(self.return_rate_of_fire(target_range))
         hits = sum([1 for _ in range(rate_of_fire) if random.random() < hit_rate])
         return hits
 
 
+class Ship:
+    def __init__(self, name, hull_class, size, life, side, deck, primary_fire_effect_table, primary_total,
+                 primary_side, primary_bow, primary_stern, primary_end_arc, secondary_fire_effect_table,
+                 secondary_total, secondary_side, secondary_bow, secondary_stern, secondary_end_arc, torpedoes_type,
+                 torpedoes_mount, torpedoes_total, torpedoes_size):
+        self.name = name
+        self.hull_class = hull_class
+        self.size = size
+        self.life = life
+        self.side = side
+        self.deck = deck
+        self.primary_armament = Gun(primary_fire_effect_table)
+        self.primary_total = primary_total
+        self.primary_side = primary_side
+        self.primary_bow = primary_bow
+        self.primary_stern = primary_stern
+        self.primary_end_arc = primary_end_arc
+        if secondary_fire_effect_table != "NA":
+            self.secondary_armament = Gun(secondary_fire_effect_table)
+        else:
+            self.secondary_armament = "NA"
+        self.secondary_total = secondary_total
+        self.secondary_side = secondary_side
+        self.secondary_bow = secondary_bow
+        self.secondary_stern = secondary_stern
+        self.secondary_end_arc = secondary_end_arc
+        self.torpedoes_type = torpedoes_type
+        self.torpedoes_mount = torpedoes_mount
+        self.torpedoes_total = torpedoes_total
+        self.torpedoes_size = torpedoes_size
+
+
 test_gun = Gun("6-in-50")
 print(test_gun.return_hit_percentage("large", 16, "top"))
 print(test_gun.return_rate_of_fire(16))
 print(test_gun.return_stochastic_hits("large", 16, "top"))
+
+sydney = Ship("Sydney", "CL", "small", 3.17, 3, 2, "6-in-50", 8, 4, 2, 2, 45, "NA", "NA", "NA", "NA", "NA", "NA", "B 21 in", "S", 2, 2)
+
+print(sydney.primary_armament.return_stochastic_hits("large", 16, "top"))

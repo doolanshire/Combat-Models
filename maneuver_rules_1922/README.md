@@ -16,13 +16,15 @@ Engagement information will eventually be stored in external CSV files so that d
 
 ## Done so far
 
-#### Program files:
+#### Program logic:
 
-* **helper_functions.py**: a series of utilities not strictly needed for the conduct of the game, but useful for its preparation - calculating ship life values, fighting strenghts, etc.
+* **Gun** class partially implemented.
 
-#### Data directories:
+#### Data:
 
-* **Fire effect tables**: containing CSV files with the fire effect tables for most naval guns or at least reasonably close equivalents.
+* **Fire effect tables** collected for the following guns:
+    + 6-in/53
+    + 6-in/50
 
 ## To do
 Mostly everything
