@@ -72,23 +72,15 @@ class Gun:
         target_range = int(target_range)
         if target_range > self.maximum_range:
             return 0
-        if not target_range % 2:
-            return self.hit_percentage[spot_type][target_size][target_range] / 100
         else:
-            shorter_range = self.hit_percentage[spot_type][target_size][target_range - 1]
-            longer_range = self.hit_percentage[spot_type][target_size][target_range + 1]
-            return (shorter_range + longer_range) / 2 / 100
+            return self.hit_percentage[spot_type][target_size][target_range] / 100
 
     def return_rate_of_fire(self, target_range, move_duration=1):
         """Returns the rate of fire for the gun at a given range."""
         if target_range > self.maximum_range:
             return 0
-        if not target_range % 2:
-            return self.rate_of_fire[self.designation][target_range] / 3 * move_duration
         else:
-            shorter_range = self.rate_of_fire[self.designation][target_range - 1]
-            longer_range = self.rate_of_fire[self.designation][target_range + 1]
-            return ((shorter_range + longer_range) / 2) / 3 * move_duration
+            return self.rate_of_fire[self.designation][target_range] / 3 * move_duration
 
 
 class Ship:
@@ -165,9 +157,9 @@ test_gun = Gun("6-in-50")
 sydney = Ship("Sydney", "CL", "small", 3.17, 3, 2, "6-in-50", 8, 4, 2, 2, 45, "NA", "NA", "NA", "NA", "NA", "NA",
               "B 21 in", "S", 2, 2)
 
-print(sydney.return_base_hits("large", 8, 90, "top"))
+print(sydney.return_base_hits("small", 10, 90, "top"))
 results = []
 for _ in range(1000):
-    results.append(sydney.return_stochastic_hits("large", 8, 90, "top"))
+    results.append(sydney.return_stochastic_hits("small", 10, 90, "top"))
 
 print(sum(results)/len(results))
