@@ -36,6 +36,8 @@ class Gun:
 
         # GENERAL DATA
 
+        self.caliber = float(self.designation.split("-")[0])
+
         # Load the gun types dataframe.
         gun_types_path = "fire_effect_tables/{}/gun_types.csv".format(FIRE_EFFECT_TABLES_EDITION)
         general_data = pd.read_csv(gun_types_path, index_col="designation", na_values="--")
@@ -43,6 +45,15 @@ class Gun:
         self.projectile_weight = int(general_data["projectile_weight"][self.designation])
         self.muzzle_velocity = int(general_data["muzzle_velocity"][self.designation])
         self.maximum_range = int(general_data["maximum_range"][self.designation])
+
+        # HIT VALUE CONVERSION FACTORS
+
+        # Define the paths for the hit value tables.
+        penetrative_path = "fire_effect_tables/{}/hit_values_penetrative.csv".format(FIRE_EFFECT_TABLES_EDITION)
+        non_penetrative_path = "fire_effect_tables/{}/hit_values_non_penetrative.csv".format(FIRE_EFFECT_TABLES_EDITION)
+        # Load the data.
+        self.penetrative_values = pd.read_csv(penetrative_path, index_col="caliber", dtype=float)
+        self.non_penetrative_values = pd.read_csv(non_penetrative_path, index_col="caliber", dtype=float)
 
         # HIT PERCENTAGE
 
@@ -89,6 +100,16 @@ class Gun:
             shorter_range = self.rate_of_fire[self.designation][target_range - 1]
             longer_range = self.rate_of_fire[self.designation][target_range + 1]
             return ((shorter_range + longer_range) / 2) / 3 * move_duration
+
+    def return_hit_value(self, target_size, penetrative):
+        if penetrative:
+            if target_size == "submarine":
+                return self.penetrative_values[target_size][self.caliber]
+            else:
+                return self.penetrative_values["large, intermediate, small, destroyer"][self.caliber]
+
+        else:
+            return self.non_penetrative_values[target_size][self.caliber]
 
 
 class Ship:
@@ -165,9 +186,11 @@ test_gun = Gun("6-in-50")
 sydney = Ship("Sydney", "CL", "small", 3.17, 3, 2, "6-in-50", 8, 4, 2, 2, 45, "NA", "NA", "NA", "NA", "NA", "NA",
               "B 21 in", "S", 2, 2)
 
-print(sydney.return_base_hits("large", 8, 90, "top"))
+print(sydney.return_base_hits("large", 16, 90, "top"))
 results = []
-for _ in range(1000):
-    results.append(sydney.return_stochastic_hits("large", 8, 90, "top"))
+for _ in range(10000):
+    results.append(sydney.return_stochastic_hits("large", 16, 90, "top"))
 
 print(sum(results)/len(results))
+
+print(test_gun.return_hit_value("large", False))
