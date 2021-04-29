@@ -18,7 +18,7 @@ class Gun:
 
     For example, '6-in-50' or '13.5-in-45'.
 
-    Attributes:
+    The class attributes are:
     - designation: the gun's designation as explained above.
     - projectile_weight: the projectile weight in lbs.
     - muzzle_velocity: the gun's muzzle velocity in feet per second.
@@ -117,29 +117,32 @@ class Ship:
     data files.
 
     Attributes:
-        - General:
-            - name (string): the name of the ship.
-            - hull class (string): BB, CC, CA, CL, DD, etc. For a list of possible values check the file
-            "life_coefficients.csv" in the helper_functions directory.
-            - size (string): large, intermediate, small, destroyer or submarine.
-            - side (float): the side (belt) armour amidships, in inches.
-            - deck (float): the deck armour amidships, in inches.
-        - Primary armament:
-            - primary_fire_effect_table (string): the fire effect table used by the primary armament (e.g. "6-in-50").
-            - primary_total (int): the number of guns in the main battery.
-            - primary_broadside (int): the number of guns the ship can fire broadside-on.
-            - primary_bow (int): the number of guns the ship can fire at a target ahead.
-            - primary_stern (int): the number of guns the ship can fire at a target astern.
-            - primary_end_arc (int): the number of degrees from the bow or stern before the firing arc is considered to
-            be broadside-on.
-        - Secondary armament:
-            - As above, but with "secondary_" as a prefix.
-        - Torpedoes:
-            - torpedoes_type (string): the type and caliber of the torpedoes carried by the ship, if any.
-            - torpedoes_mount (string): whether the torpedo tubes are submerged (S) or deck-mounted (D).
-            - torpedoes_total (int): total number of torpedo tubes.
-            - torpedoes_side (int): number of torpedo tubes which can fire on either side.
-    """
+        *General*
+        - name (string): the name of the ship.
+        - hull class (string): BB, CC, CA, CL, DD, etc. For a list of possible values check the file "life_coefficients"
+        in the helper_functions directory.
+        - size (string): large, intermediate, small, destroyer or submarine.
+        - side (float): the side (belt) armour amidships, in inches.
+        - deck (float): the deck armour amidships, in inches.
+
+        *Primary armament*
+        - primary_fire_effect_table (string): the fire effect table used by the primary armament (e.g. "6-in-50").
+        - primary_total (int): the number of guns in the main battery.
+        - primary_broadside (int): the number of guns the ship can fire broadside-on.
+        - primary_bow (int): the number of guns the ship can fire at a target ahead.
+        - primary_stern (int): the number of guns the ship can fire at a target astern.
+        - primary_end_arc (int): the number of degrees from the bow or stern before the firing arc is considered to be
+        broadside-on.
+
+        *Secondary armament*
+        As above, except with secondary_ as a prefix.
+
+        *Torpedoes*
+        - torpedoes_type (string): the type and caliber of the torpedoes carried by the ship, if any.
+        - torpedoes_mount (string): whether the torpedo tubes are submerged (S) or deck-mounted (D).
+        - torpedoes_total (int): total number of torpedo tubes.
+        - torpedoes_side (int): number of torpedo tubes which can fire on either side.
+        """
 
     def __init__(self, name, hull_class, size, life, side, deck, primary_fire_effect_table, primary_total,
                  primary_broadside, primary_bow, primary_stern, primary_end_arc, secondary_fire_effect_table,
@@ -185,10 +188,10 @@ class Ship:
     def calculate_primary_salvo_size(self, target_bearing):
         """Calculates the number of guns bearing on a target based on its bearing.
 
-        :param int target_bearing: the target bearing in degrees. Any input larger than 180 is
-        appropriately converted.
+        Parameters:
+            - target_bearing: the target bearing in degrees. Any input larger than 180 is appropriately converted.
 
-        :return: an integer representing the number of guns that can fire at a target at the input bearing.
+        Returns: an integer representing the number of guns that can fire at a target at the input bearing.
         """
         if target_bearing > 180:
             target_bearing = 180 - (target_bearing % 180)
@@ -207,17 +210,17 @@ class Ship:
         is calculated simply by multiplying the salvo size (number of guns bearing) by the rate of fire, and then by
         the percentage of hits expected for the target size, range and spot type.
 
-        :param string target_size: the size of the target (large, small, intermediate, destroyer or submarine).
-        :param int target_range: the range to the target in thousands of yards beginning at 1.
-        :param int target_bearing: the target bearing in degrees, with 90 meaning broadside on, 0 bow on and 180 stern.
-        :param str spot_type: top, kite or plane spot. Bear in mind that from 1930 on the Naval War College's fire
-        effect tables do not use kite spot.
-        :param int move_duration: the duration of each move in minutes. Defaults to 1, because that is how this model
-        simulates time increments. Change to 3 if you want to test whether the function returns values consistent
-        with the ones in the Naval War College's fire effect tables.
+        Parameters:
+            - target_size (string): the size of the target (large, small, intermediate, destroyer or submarine).
+            - target_range (int): the range to the target in thousands of yards beginning at 1.
+            - target_bearing (int): the target bearing in degrees, with 90 meaning broadside on, 0 bow on and 180 stern.
+            - spot_type (string): top, kite or plane spot. Bear in mind that from 1930 on the Naval War College's fire
+            effect tables do not use kite spot.
+            - move_duration (int): the duration of each move in minutes. Defaults to 1, because that is how this model
+            simulates time increments. Change to 3 if you want to test whether the function returns values consistent
+            with the ones in the Naval War College's fire effect tables.
 
-        :return: a float indicating the expected base number of hits.
-        :rtype: float
+        Returns: a float indicating the expected base number of hits.
         """
 
         salvo_size = self.calculate_primary_salvo_size(target_bearing)
