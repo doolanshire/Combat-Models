@@ -243,33 +243,6 @@ class Ship:
         return hits
 
 
-class Group:
-    def __init__(self, name, members, initial_speed, initial_course, initial_target):
-        self.name = name
-        self.members = members
-        # Speed at the start and end of the move.
-        self.initial_speed = initial_speed
-        self.current_speed = None
-        # Course at the start and end of the move.
-        self.initial_course = initial_course
-        self.current_course = None
-        # Target at the start and end of the move.
-        self.initial_target = initial_target
-        self.current_target = None
-        # Group life (nominal).
-        self.life = sum(ship.life for ship in members)
-        # Group life at the start and end of the move. Both are equal to the nominal group life upon creation.
-        self.initial_life = self.current_life = self.life
-        # Status.
-        self.status = 1
-
-    def add_ship(self, ship):
-        self.members.append(ship)
-        self.life += ship.life
-        self.current_life += ship.hit_points
-        self.status = self.current_life / self.life
-
-
 test_gun = Gun("6-in-50")
 
 sydney = Ship("Sydney", "CL", "small", 3.17, 3, 2, "6-in-50", 8, 4, 2, 2, 45, "NA", "NA", "NA", "NA", "NA", "NA",
