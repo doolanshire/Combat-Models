@@ -258,7 +258,7 @@ class Ship:
         return hits
 
 
-test_gun = Gun("4-in-50")
+test_gun = Gun("4-in-45-A")
 
 sydney = Ship("Sydney", "CL", "small", 3.17, 3, 2, "6-in-50", 8, 4, 2, 2, 45, "NA", "NA", "NA", "NA", "NA", "NA",
               "B 21 in", "S", 2, 2)
