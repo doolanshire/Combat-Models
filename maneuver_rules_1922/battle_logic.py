@@ -148,12 +148,15 @@ class Ship:
                  primary_broadside, primary_bow, primary_stern, primary_end_arc, secondary_fire_effect_table,
                  secondary_total, secondary_broadside, secondary_bow, secondary_stern, secondary_end_arc,
                  torpedoes_type, torpedoes_mount, torpedoes_total, torpedoes_size):
+        # General data
         self.name = name
         self.hull_class = hull_class
         self.size = size
         self.life = life
         self.side = side
         self.deck = deck
+
+        # Armament data
         # Skip primary battery Gun creation if the ship has no significant primary armament.
         if primary_fire_effect_table != "NA":
             self.primary_armament = Gun(primary_fire_effect_table)
@@ -184,6 +187,18 @@ class Ship:
 
         # Remainder hits from previous salvo. Used in the stochastic model.
         self.remainder_hits = 0
+
+        # Own motion data
+        self.initial_speed = self.current_speed = None
+        self.initial_course = self.current_course = None
+
+        # Target data
+        self.initial_targets = []
+        self.current_targets = []
+        self.initial_range = self.current_range = None
+
+        # Incoming fire data
+        self.incoming_fire = {"capital": 0, "cruiser": 0, "light_cruiser": 0, "destroyer": 0}
 
     def calculate_primary_salvo_size(self, target_bearing):
         """Calculates the number of guns bearing on a target based on its bearing.
