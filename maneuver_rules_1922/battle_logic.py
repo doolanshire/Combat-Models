@@ -258,7 +258,7 @@ class Ship:
         return hits
 
 
-test_gun = Gun("6-in-50")
+test_gun = Gun("4-in-50")
 
 sydney = Ship("Sydney", "CL", "small", 3.17, 3, 2, "6-in-50", 8, 4, 2, 2, 45, "NA", "NA", "NA", "NA", "NA", "NA",
               "B 21 in", "S", 2, 2)
@@ -270,4 +270,4 @@ for _ in range(10000):
 
 print(sum(results)/len(results))
 
-print(test_gun.return_hit_value("large", False))
+print(test_gun.return_hit_value("intermediate", False))
