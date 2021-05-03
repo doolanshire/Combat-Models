@@ -263,11 +263,8 @@ test_gun = Gun("4-in-45-A")
 sydney = Ship("Sydney", "CL", "small", 3.17, 3, 2, "6-in-50", 8, 4, 2, 2, 45, "NA", "NA", "NA", "NA", "NA", "NA",
               "B 21 in", "S", 2, 2)
 
-print(sydney.return_base_hits("large", 16, 90, "top"))
-results = []
-for _ in range(10000):
-    results.append(sydney.return_stochastic_hits("large", 16, 90, "top"))
+emden = Ship("Emden", "CL", "small", 2.37, 3, 1.2, "4-in-45-A", 10, 5, 2, 2, 30, "NA", "NA", "NA", "NA", "NA", "NA",
+             "B 17.7 in", "S", 2, 2)
 
-print(sum(results)/len(results))
-
-print(test_gun.return_hit_percentage("large", 12, "top"))
+print(sydney.return_base_hits("small", 5, 90, "top"))
+print(emden.return_base_hits("small", 5, 90, "top"))
