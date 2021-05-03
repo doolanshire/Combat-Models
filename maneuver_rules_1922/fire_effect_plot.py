@@ -5,8 +5,8 @@ check for bad input values.
 import matplotlib.pyplot as plt
 import pandas as pd
 
-fire_effect_tables_edition = "1922"
-gun_designation = '6-in-50'
+fire_effect_tables_edition = "1930"
+gun_designation = '4-in-45-A'
 spot_type = 'top'
 
 file_path = "fire_effect_tables/{}/{}/{}_percent_{}.csv".format(fire_effect_tables_edition, gun_designation,

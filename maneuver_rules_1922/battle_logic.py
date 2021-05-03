@@ -270,4 +270,4 @@ for _ in range(10000):
 
 print(sum(results)/len(results))
 
-print(test_gun.return_hit_value("intermediate", False))
+print(test_gun.return_hit_percentage("large", 12, "top"))
