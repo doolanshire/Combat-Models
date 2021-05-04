@@ -195,7 +195,8 @@ class Ship:
         self.initial_course = self.current_course = None
 
         # Target data
-        self.initial_targets = []
+        self.targets_two_minutes_ago = []
+        self.targets_one_minute_ago = []
         self.current_targets = []
         self.initial_range = self.current_range = None
 
@@ -247,7 +248,7 @@ class Ship:
 
         return base_hits
 
-    def return_first_correction(self):
+    def return_first_correction(self, target, target_range):
         """Returns the first correction to gunfire – a ratio which reduces rate of fire. It begins at a value of 1
         (no reduction) and diminishes in steps of one tenth depending on circumstances affecting gunnery.
 
@@ -261,7 +262,21 @@ class Ship:
         status_lost = round(1 - math.ceil(self.status * 10) / 10, 1)
         first_correction -= status_lost
 
-        return first_correction
+        # Check whether range has to be established.
+        # First check whether the target has been fired at before for one full move.
+        if target not in self.targets_one_minute_ago or target not in self.targets_two_minutes_ago:
+            if target_range > 25:
+                first_correction -= 1
+            elif target_range >= 21:
+                first_correction -= 0.8
+            elif target_range >= 16:
+                first_correction -= 0.6
+            elif target_range >= 11:
+                first_correction -= 0.4
+            elif target_range >= 6:
+                first_correction -= 0.2
+
+        return round(first_correction, 2)
 
     # This function is temporary and will be implemented somewhere else.
     def return_stochastic_hits(self, target_size, target_range, target_bearing, spot_type, move_duration=1):
@@ -286,4 +301,4 @@ emden = Ship("Emden", "CL", "small", 2.37, 3, 1.2, "4-in-45-A", 10, 5, 2, 2, 30,
 
 print(sydney.return_base_hits("small", 5, 90, "top"))
 print(emden.return_base_hits("small", 5, 90, "top"))
-print(emden.return_first_correction())
+print(emden.return_first_correction(sydney, 25))
