@@ -2,6 +2,7 @@
 # NAVAL WAR COLLEGE MANEUVER RULES 1922 #
 #########################################
 
+import math
 import os
 import pandas as pd
 import random
@@ -152,7 +153,8 @@ class Ship:
         self.name = name
         self.hull_class = hull_class
         self.size = size
-        self.life = life
+        self.life = self.hit_points = self.starting_hit_points = life
+        self.status = self.hit_points / self.starting_hit_points
         self.side = side
         self.deck = deck
 
@@ -245,6 +247,22 @@ class Ship:
 
         return base_hits
 
+    def return_first_correction(self):
+        """Returns the first correction to gunfire – a ratio which reduces rate of fire. It begins at a value of 1
+        (no reduction) and diminishes in steps of one tenth depending on circumstances affecting gunnery.
+
+        :return float: the first correction as a ratio (0 to 1) applied to rate of fire.
+        """
+
+        # The first correction starts at 1.
+        first_correction = 1
+
+        # Modify rate of fire by ship status.
+        status_lost = round(1 - math.ceil(self.status * 10) / 10, 1)
+        first_correction -= status_lost
+
+        return first_correction
+
     # This function is temporary and will be implemented somewhere else.
     def return_stochastic_hits(self, target_size, target_range, target_bearing, spot_type, move_duration=1):
         salvo_size = self.calculate_primary_salvo_size(target_bearing)
@@ -268,3 +286,4 @@ emden = Ship("Emden", "CL", "small", 2.37, 3, 1.2, "4-in-45-A", 10, 5, 2, 2, 30,
 
 print(sydney.return_base_hits("small", 5, 90, "top"))
 print(emden.return_base_hits("small", 5, 90, "top"))
+print(emden.return_first_correction())
