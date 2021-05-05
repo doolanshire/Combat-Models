@@ -2,7 +2,7 @@
 # NAVAL WAR COLLEGE MANEUVER RULES 1922 #
 #########################################
 
-import math
+# import math
 import os
 import pandas as pd
 import random
@@ -91,16 +91,12 @@ class Gun:
             longer_range = self.hit_percentage[spot_type][target_size][target_range + 1]
             return (shorter_range + longer_range) / 2 / 100
 
-    def return_rate_of_fire(self, target_range, move_duration=1):
+    def return_rate_of_fire(self, target_range, move_duration=3):
         """Returns the rate of fire for the gun at a given range."""
         if target_range > self.maximum_range:
             return 0
-        if not target_range % 2:
-            return self.rate_of_fire[self.designation][target_range] / 3 * move_duration
         else:
-            shorter_range = self.rate_of_fire[self.designation][target_range - 1]
-            longer_range = self.rate_of_fire[self.designation][target_range + 1]
-            return ((shorter_range + longer_range) / 2) / 3 * move_duration
+            return self.rate_of_fire[self.designation][target_range] / 3 * move_duration
 
     def return_hit_value(self, target_size, penetrative):
         if penetrative:
@@ -195,8 +191,7 @@ class Ship:
         self.initial_course = self.current_course = None
 
         # Target data
-        self.targets_two_minutes_ago = []
-        self.targets_one_minute_ago = []
+        self.previous_targets = []
         self.current_targets = []
         self.initial_range = self.current_range = None
 
@@ -258,13 +253,14 @@ class Ship:
         # The first correction starts at 1.
         first_correction = 1
 
-        # Modify rate of fire by ship status.
-        status_lost = round(1 - math.ceil(self.status * 10) / 10, 1)
-        first_correction -= status_lost
+        # F-49: Modify rate of fire by ship status.
+        # status_lost = round(1 - math.ceil(self.status * 10) / 10, 1)
+        # first_correction -= status_lost
+        first_correction *= self.status
 
-        # Check whether range has to be established.
+        # F-15: Check whether range has to be established.
         # First check whether the target has been fired at before for one full move.
-        if target not in self.targets_one_minute_ago or target not in self.targets_two_minutes_ago:
+        if target not in self.previous_targets:
             if target_range > 25:
                 first_correction -= 1
             elif target_range >= 21:
@@ -275,6 +271,13 @@ class Ship:
                 first_correction -= 0.4
             elif target_range >= 6:
                 first_correction -= 0.2
+
+            # PENDING: implement firing at a different target in the same formation.
+
+        # F-18: Check whether fire has been obscured for less than one move, and if so reduce firepower proportionally.
+        # This rule is not implemented directly. If anything has interfered with rate of fire for less than three
+        # minutes during a given move, it should be specified in the "first correction modifier" for the event in the
+        # fire events files.
 
         return round(first_correction, 2)
 
@@ -292,6 +295,7 @@ class Ship:
 
 
 test_gun = Gun("4-in-45-A")
+print(test_gun.return_rate_of_fire(1))
 
 sydney = Ship("Sydney", "CL", "small", 3.17, 3, 2, "6-in-50", 8, 4, 2, 2, 45, "NA", "NA", "NA", "NA", "NA", "NA",
               "B 21 in", "S", 2, 2)
@@ -301,4 +305,6 @@ emden = Ship("Emden", "CL", "small", 2.37, 3, 1.2, "4-in-45-A", 10, 5, 2, 2, 30,
 
 print(sydney.return_base_hits("small", 5, 90, "top"))
 print(emden.return_base_hits("small", 5, 90, "top"))
-print(emden.return_first_correction(sydney, 25))
+emden.previous_targets = [sydney]
+emden.status = 0.92
+print(emden.return_first_correction(sydney, 10))
