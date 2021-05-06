@@ -294,6 +294,24 @@ class Ship:
         return hits
 
 
+class Group:
+    """A temporary implementation of the Group class, made only to enable those firepower correction rules which require
+    knowing whether ships are adjacent.
+    """
+    def __init__(self, name, ships, group_type, formation=True):
+        self.name = name
+        self.ships = ships
+        self.group_type = group_type
+        self.formation = formation
+
+
+class Side:
+    """A temporary implementation of the Side class, made only to enable looking up a certain group for targeting."""
+    def __init__(self, name, groups):
+        self.name = name
+        self.groups = groups
+
+
 test_gun = Gun("4-in-45-A")
 print(test_gun.return_rate_of_fire(1))
 
