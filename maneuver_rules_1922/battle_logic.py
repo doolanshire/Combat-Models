@@ -91,12 +91,12 @@ class Gun:
             longer_range = self.hit_percentage[spot_type][target_size][target_range + 1]
             return (shorter_range + longer_range) / 2 / 100
 
-    def return_rate_of_fire(self, target_range, move_duration=3):
+    def return_rate_of_fire(self, target_range):
         """Returns the rate of fire for the gun at a given range."""
         if target_range > self.maximum_range:
             return 0
         else:
-            return self.rate_of_fire[self.designation][target_range] / 3 * move_duration
+            return self.rate_of_fire[self.designation][target_range]
 
     def return_hit_value(self, target_size, penetrative):
         if penetrative:
@@ -218,7 +218,7 @@ class Ship:
 
         return salvo_size
 
-    def return_base_hits(self, target_size, target_range, target_bearing, spot_type, move_duration=1):
+    def return_base_hits(self, target_size, target_range, target_bearing, spot_type):
         """Returns the (deterministic) average number of hits expected per move, without any negative modifiers. This
         is calculated simply by multiplying the salvo size (number of guns bearing) by the rate of fire, and then by
         the percentage of hits expected for the target size, range and spot type.
@@ -237,7 +237,7 @@ class Ship:
         """
 
         salvo_size = self.calculate_primary_salvo_size(target_bearing)
-        rate_of_fire = self.primary_armament.return_rate_of_fire(target_range, move_duration)
+        rate_of_fire = self.primary_armament.return_rate_of_fire(target_range)
         base_to_hit = self.primary_armament.return_hit_percentage(target_size, target_range, spot_type)
         base_hits = salvo_size * rate_of_fire * base_to_hit
 
@@ -282,9 +282,9 @@ class Ship:
         return round(first_correction, 2)
 
     # This function is temporary and will be implemented somewhere else.
-    def return_stochastic_hits(self, target_size, target_range, target_bearing, spot_type, move_duration=1):
+    def return_stochastic_hits(self, target_size, target_range, target_bearing, spot_type):
         salvo_size = self.calculate_primary_salvo_size(target_bearing)
-        rate_of_fire = self.primary_armament.return_rate_of_fire(target_range, move_duration)
+        rate_of_fire = self.primary_armament.return_rate_of_fire(target_range)
         total_shots = (salvo_size * rate_of_fire) + self.remainder_hits
         self.remainder_hits = total_shots - int(total_shots)
         total_shots = int(total_shots)
@@ -312,17 +312,19 @@ class Side:
         self.groups = groups
 
 
-test_gun = Gun("4-in-45-A")
-print(test_gun.return_rate_of_fire(1))
-
 sydney = Ship("Sydney", "CL", "small", 3.17, 3, 2, "6-in-50", 8, 4, 2, 2, 45, "NA", "NA", "NA", "NA", "NA", "NA",
               "B 21 in", "S", 2, 2)
 
 emden = Ship("Emden", "CL", "small", 2.37, 3, 1.2, "4-in-45-A", 10, 5, 2, 2, 30, "NA", "NA", "NA", "NA", "NA", "NA",
              "B 17.7 in", "S", 2, 2)
 
-print(sydney.return_base_hits("small", 5, 90, "top"))
-print(emden.return_base_hits("small", 5, 90, "top"))
-emden.previous_targets = [sydney]
-emden.status = 0.92
-print(emden.return_first_correction(sydney, 10))
+side_a_group_ships = {"Sydney": sydney}
+side_b_group_ships = {"Emden": emden}
+
+side_a_groups = {"Sydney": Group("Sydney", side_a_group_ships, False)}
+side_b_groups = {"Emden": Group("Emden", side_b_group_ships, False)}
+
+side_a = Side("Australia", side_a_groups)
+side_b = Side("Germany", side_b_groups)
+
+print(side_a.groups["Sydney"].ships["Sydney"].return_base_hits("large", 10, 90, "top"))
