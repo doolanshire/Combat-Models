@@ -81,11 +81,22 @@ class Gun:
 
         # ARMOUR PENETRATION
 
-        # Define the path for the armor penetration ranges table.
-        penetration_ranges_path = "{}{}_penetration_ranges.csv".format(fire_effect_tables_path, self.designation)
+        # Define the path for the side armor penetration ranges table.
+        side_penetration_ranges_path = "{}{}_side_penetration_ranges.csv".format(fire_effect_tables_path,
+                                                                                 self.designation)
 
-        # Create a penetration ranges dataframe.
-        self.penetration_ranges = pd.read_csv(penetration_ranges_path, index_col='armor', na_values='---', dtype=float)
+        # Create a side penetration ranges dataframe.
+        self.side_penetration_ranges = pd.read_csv(side_penetration_ranges_path, index_col='armor', na_values='---',
+                                                   dtype=float)
+
+        # Define the path for the deck penetration ranges table.
+        if self.caliber >= 5.5:
+            deck_penetration_ranges_path = "{}{}_deck_penetration_ranges.csv".format(fire_effect_tables_path,
+                                                                                     self.designation)
+
+            # Create a deck penetration ranges dataframe.
+            self.deck_penetration_ranges = pd.read_csv(deck_penetration_ranges_path, index_col='armor', na_values='X',
+                                                       dtype=float)
 
     def return_hit_percentage(self, target_size, target_range, spot_type):
         """Returns the hit percentage of the gun for a given target size, range and spot type."""
@@ -116,9 +127,9 @@ class Gun:
         else:
             return self.non_penetrative_values[target_size][self.caliber]
 
-    def return_penetration(self, armor, deflection, target_range):
+    def return_side_penetration(self, armor, deflection, target_range):
         # If armor is thicker than the range tables predict, return False.
-        armor_values = self.penetration_ranges.index
+        armor_values = self.side_penetration_ranges.index
         if armor > max(armor_values):
             return False
 
@@ -142,14 +153,44 @@ class Gun:
             armor = min(armor_values, key=lambda x: abs(x-armor))
 
         # Check whether a shot would penetrate at that range and deflection.
-        if pd.isnull(self.penetration_ranges.loc[armor, deflection]):
+        if pd.isnull(self.side_penetration_ranges.loc[armor, deflection]):
             return True
 
-        if target_range <= self.penetration_ranges.loc[armor, deflection]:
+        if target_range <= self.side_penetration_ranges.loc[armor, deflection]:
             return True
 
         else:
             return False
+
+    def return_deck_penetration(self, armor, target_range):
+        # Deck penetration only applies to guns 5.5 inches or larger.
+        if self.caliber < 5.5:
+            return False
+
+        else:
+            armor_values = self.deck_penetration_ranges.index
+            # Return false if the armour is thicker than what is listed in the penetration tables.
+            if armor > max(armor_values):
+                return False
+            # Likewise, return True if the armour is thinner than the minimum value listed.
+            if armor < min(armor_values):
+                return True
+
+            # Else.
+            # Check for the nearest armor value.
+            if armor not in armor_values:
+                armor = min(armor_values, key=lambda x: abs(x - armor))
+
+            # Return false if the range listed for that armor value is NAN.
+            if pd.isnull(self.deck_penetration_ranges.loc[armor, "target_range"]):
+                return False
+
+            # Else.
+            if target_range >= self.deck_penetration_ranges.loc[armor, "target_range"]:
+                return True
+
+            else:
+                return False
 
 
 class Ship:
@@ -378,5 +419,7 @@ print(side_a.groups["Sydney"].ships["Sydney"].return_base_hits("large", 10, 90, 
 
 print(emden.target_data)
 
-test_gun = Gun("4-in-45-A")
-print(test_gun.return_penetration(1.6, 15, 12))
+test_gun = Gun("6-in-50")
+print(test_gun.return_side_penetration(1.6, 15, 12))
+print(test_gun.deck_penetration_ranges)
+print(test_gun.return_deck_penetration(0.2, 2))
