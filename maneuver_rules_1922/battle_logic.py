@@ -273,13 +273,13 @@ class Ship:
 
         # Target data
         self.remainder_hits = 0
-        self.previous_targets = []
-        self.current_targets = []
 
+        self.previous_target_data = pd.DataFrame(columns=["firing group", "target group", "target_name", "fire",
+                                                          "allocated_turrets", "target_bearing", "target_range",
+                                                          "evasive", "target_deflection", "penetration"])
         self.target_data = pd.DataFrame(columns=["firing group", "target group", "target_name", "fire",
-                                                 "allocated_turrets", "opening_fire", "target_bearing", "target_range",
-                                                 "current_speed", "current_course", "evasive", "target_deflection",
-                                                 "penetration"])
+                                                 "allocated_turrets", "target_bearing", "target_range", "evasive",
+                                                 "target_deflection", "penetration"])
 
         # Incoming fire data
         self.incoming_fire = pd.DataFrame(columns=["ship_name", "guns_firing", "caliber", "range"])
@@ -342,9 +342,8 @@ class Ship:
 
         for ship in target_list:
             penetration = self.primary_armament.return_side_penetration(ship.side, target_deflection, target_range)
-            self.target_data.loc[ship.name] = (firing_group, target_group, ship.name, fire, 0, True, target_bearing,
-                                               target_range, self.current_speed, self.current_course, evasive,
-                                               target_deflection, penetration)
+            self.target_data.loc[ship.name] = (firing_group, target_group, ship.name, fire, 0, target_bearing,
+                                               target_range, evasive, target_deflection, penetration)
 
     def return_first_correction(self, target, target_range):
         """Returns the first correction to gunfire – a ratio which reduces rate of fire. It begins at a value of 1
@@ -363,7 +362,7 @@ class Ship:
 
         # F-15: Check whether range has to be established.
         # First check whether the target has been fired at before for one full move.
-        if target not in self.previous_targets:
+        if target not in self.previous_target_data:
             if target_range > 25:
                 first_correction -= 1
             elif target_range >= 21:
@@ -415,27 +414,61 @@ class Side:
         self.groups = groups
 
 
+# Test ship
 sydney = Ship("Sydney", "CL", "small", 3.17, 3, 2, "6-in-50", 8, 4, 2, 2, 45, "NA", "NA", "NA", "NA", "NA", "NA",
               "B 21 in", "S", 2, 2)
 
+# Test ship motion data
+sydney.initial_speed = 12
+sydney.current_speed = 14
+sydney.initial_course = 90
+sydney.current_course = 120
+
+# Test ship
 emden = Ship("Emden", "CL", "small", 2.37, 3, 1.2, "4-in-45-A", 10, 5, 2, 2, 30, "NA", "NA", "NA", "NA", "NA", "NA",
              "B 17.7 in", "S", 2, 2)
 
+# Test ship motion data
+emden.initial_speed = 10
+emden.current_speed = 15
+emden.initial_course = 80
+emden.current_course = 90
+
+# Test ship
 dresden = Ship("Dresden", "CL", "small", 2.37, 3, 1.2, "4-in-45-A", 10, 5, 2, 2, 30, "NA", "NA", "NA", "NA", "NA", "NA",
                "B 17.7 in", "S", 2, 2)
 
+# Test group ship dictionaries
 side_a_group_ships = {"Sydney": sydney}
 side_b_group_ships = {"Emden": emden, "Dresden": dresden}
 
+# Test groups
 side_a_groups = {"Sydney": Group("Sydney", side_a_group_ships, False)}
-side_b_groups = {"Emden": Group("Emden", side_b_group_ships, True)}
+side_b_groups = {"Emden and Dresden": Group("Emden", side_b_group_ships, True)}
 
+# Test sides
 side_a = Side("Australia", side_a_groups)
 side_b = Side("Germany", side_b_groups)
 
-print(emden.target_data)
-
+# Test gun
 test_gun = Gun("6-in-50")
 
-emden.target("side_b", "Emden", "Sydney", ["Sydney"], True, 75, 3, False, 80)
-print(emden.target_data)
+# Target Sydney as Emden
+emden.target("side_b", "Emden and Dresden", "Sydney", ["Sydney"], False, 12, 85, True, 90)
+# Advance one turn
+emden.previous_target_data = emden.target_data.copy()
+# Target again, firing this time
+emden.target("side_b", "Emden and Dresden", "Sydney", ["Sydney"], True, 10, 70, True, 75)
+
+# Simulate first correction by checking whether Emden is opening fire on Sydney.
+opening_fire = ("Sydney" in emden.previous_target_data.index) and (not emden.previous_target_data["fire"]["Sydney"])
+print(opening_fire)
+
+# Check range rate on target
+range_rate = abs(emden.target_data["target_range"]["Sydney"] - emden.previous_target_data["target_range"]["Sydney"])
+print(range_rate)
+
+# Print target data
+with pd.option_context('display.max_rows', 5, 'display.max_columns', None, 'display.width', None):
+    print(emden.previous_target_data)
+    print(emden.target_data)
