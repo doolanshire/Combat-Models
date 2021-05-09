@@ -116,6 +116,41 @@ class Gun:
         else:
             return self.non_penetrative_values[target_size][self.caliber]
 
+    def return_penetration(self, armor, deflection, target_range):
+        # If armor is thicker than the range tables predict, return False.
+        armor_values = self.penetration_ranges.index
+        if armor > max(armor_values):
+            return False
+
+        # Else.
+        # Round to the nearest 15 degrees and obtain the appropriate column.
+        if deflection > 90:
+            deflection -= (deflection // 90) * 90
+
+        deflection = round(deflection / 15) * 15
+        if deflection == 90 or deflection == 0:
+            deflection = "90 or 0"
+        elif deflection == 75 or deflection == 15:
+            deflection = "75 or 15"
+        elif deflection == 60 or deflection == 30:
+            deflection = "60 or 30"
+        else:
+            deflection = "45"
+
+        # Check for nearest armor value.
+        if armor not in armor_values:
+            armor = min(armor_values, key=lambda x: abs(x-armor))
+
+        # Check whether a shot would penetrate at that range and deflection.
+        if pd.isnull(self.penetration_ranges.loc[armor, deflection]):
+            return True
+
+        if target_range <= self.penetration_ranges.loc[armor, deflection]:
+            return True
+
+        else:
+            return False
+
 
 class Ship:
     """A naval ship. All the data needed to instantiate a new Ship object can be found in the corresponding fleet list
@@ -342,3 +377,6 @@ side_b = Side("Germany", side_b_groups)
 print(side_a.groups["Sydney"].ships["Sydney"].return_base_hits("large", 10, 90, "top"))
 
 print(emden.target_data)
+
+test_gun = Gun("4-in-45-A")
+print(test_gun.return_penetration(1.6, 15, 12))
