@@ -79,6 +79,14 @@ class Gun:
         # Create a rate of fire dataframe.
         self.rate_of_fire = pd.read_csv(rates_of_fire_path, index_col='range', na_values="--", dtype=float)
 
+        # ARMOUR PENETRATION
+
+        # Define the path for the armor penetration ranges table.
+        penetration_ranges_path = "{}{}_penetration_ranges.csv".format(fire_effect_tables_path, self.designation)
+
+        # Create a penetration ranges dataframe.
+        self.penetration_ranges = pd.read_csv(penetration_ranges_path, index_col='armor', na_values='---', dtype=float)
+
     def return_hit_percentage(self, target_size, target_range, spot_type):
         """Returns the hit percentage of the gun for a given target size, range and spot type."""
         target_range = int(target_range)
@@ -183,20 +191,21 @@ class Ship:
         self.torpedoes_total = torpedoes_total
         self.torpedoes_size = torpedoes_size
 
-        # Remainder hits from previous salvo. Used in the stochastic model.
-        self.remainder_hits = 0
-
         # Own motion data
         self.initial_speed = self.current_speed = None
         self.initial_course = self.current_course = None
 
         # Target data
+        self.remainder_hits = 0
         self.previous_targets = []
         self.current_targets = []
-        self.initial_range = self.current_range = None
+
+        self.target_data = pd.DataFrame(columns=["target_name", "allocated_guns", "opening_fire", "previous_range",
+                                                 "current_range", "previous_speed", "current_speed", "previous_course",
+                                                 "current_course", "deflection", "penetration"])
 
         # Incoming fire data
-        self.incoming_fire = {"capital": 0, "cruiser": 0, "light_cruiser": 0, "destroyer": 0}
+        self.incoming_fire = pd.DataFrame(columns=["ship_name", "guns_firing", "caliber", "range"])
 
     def calculate_primary_salvo_size(self, target_bearing):
         """Calculates the number of guns bearing on a target based on its bearing.
@@ -318,6 +327,9 @@ sydney = Ship("Sydney", "CL", "small", 3.17, 3, 2, "6-in-50", 8, 4, 2, 2, 45, "N
 emden = Ship("Emden", "CL", "small", 2.37, 3, 1.2, "4-in-45-A", 10, 5, 2, 2, 30, "NA", "NA", "NA", "NA", "NA", "NA",
              "B 17.7 in", "S", 2, 2)
 
+dresden = Ship("Dresden", "CL", "small", 2.37, 3, 1.2, "4-in-45-A", 10, 5, 2, 2, 30, "NA", "NA", "NA", "NA", "NA", "NA",
+               "B 17.7 in", "S", 2, 2)
+
 side_a_group_ships = {"Sydney": sydney}
 side_b_group_ships = {"Emden": emden}
 
@@ -328,3 +340,5 @@ side_a = Side("Australia", side_a_groups)
 side_b = Side("Germany", side_b_groups)
 
 print(side_a.groups["Sydney"].ships["Sydney"].return_base_hits("large", 10, 90, "top"))
+
+print(emden.target_data)
