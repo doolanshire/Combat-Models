@@ -276,9 +276,10 @@ class Ship:
         self.previous_targets = []
         self.current_targets = []
 
-        self.target_data = pd.DataFrame(columns=["target_name", "allocated_guns", "opening_fire", "previous_range",
-                                                 "current_range", "previous_speed", "current_speed", "previous_course",
-                                                 "current_course", "deflection", "penetration"])
+        self.target_data = pd.DataFrame(columns=["firing group", "target group", "target_name", "fire",
+                                                 "allocated_turrets", "opening_fire", "target_bearing", "target_range",
+                                                 "current_speed", "current_course", "evasive", "target_deflection",
+                                                 "penetration"])
 
         # Incoming fire data
         self.incoming_fire = pd.DataFrame(columns=["ship_name", "guns_firing", "caliber", "range"])
@@ -327,6 +328,23 @@ class Ship:
         base_hits = salvo_size * rate_of_fire * base_to_hit
 
         return base_hits
+
+    def target(self, firing_side, firing_group, target_group, target_ships, fire, target_range, target_bearing, evasive,
+               target_deflection):
+        target_list = []
+        if firing_side == "side_a":
+            for ship in target_ships:
+                target_list.append(side_b.groups[target_group].ships[ship])
+
+        elif firing_side == "side_b":
+            for ship in target_ships:
+                target_list.append(side_a.groups[target_group].ships[ship])
+
+        for ship in target_list:
+            penetration = self.primary_armament.return_side_penetration(ship.side, target_deflection, target_range)
+            self.target_data.loc[ship.name] = (firing_group, target_group, ship.name, fire, 0, True, target_bearing,
+                                               target_range, self.current_speed, self.current_course, evasive,
+                                               target_deflection, penetration)
 
     def return_first_correction(self, target, target_range):
         """Returns the first correction to gunfire – a ratio which reduces rate of fire. It begins at a value of 1
@@ -407,19 +425,17 @@ dresden = Ship("Dresden", "CL", "small", 2.37, 3, 1.2, "4-in-45-A", 10, 5, 2, 2,
                "B 17.7 in", "S", 2, 2)
 
 side_a_group_ships = {"Sydney": sydney}
-side_b_group_ships = {"Emden": emden}
+side_b_group_ships = {"Emden": emden, "Dresden": dresden}
 
 side_a_groups = {"Sydney": Group("Sydney", side_a_group_ships, False)}
-side_b_groups = {"Emden": Group("Emden", side_b_group_ships, False)}
+side_b_groups = {"Emden": Group("Emden", side_b_group_ships, True)}
 
 side_a = Side("Australia", side_a_groups)
 side_b = Side("Germany", side_b_groups)
 
-print(side_a.groups["Sydney"].ships["Sydney"].return_base_hits("large", 10, 90, "top"))
-
 print(emden.target_data)
 
 test_gun = Gun("6-in-50")
-print(test_gun.return_side_penetration(1.6, 15, 12))
-print(test_gun.deck_penetration_ranges)
-print(test_gun.return_deck_penetration(0.2, 2))
+
+emden.target("side_b", "Emden", "Sydney", ["Sydney"], True, 75, 3, False, 80)
+print(emden.target_data)
