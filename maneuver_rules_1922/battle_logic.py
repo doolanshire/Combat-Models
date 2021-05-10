@@ -226,9 +226,9 @@ class Ship:
         """
 
     def __init__(self, name, hull_class, size, life, side, deck, primary_fire_effect_table, primary_total,
-                 primary_broadside, primary_bow, primary_stern, primary_end_arc, secondary_fire_effect_table,
-                 secondary_total, secondary_broadside, secondary_bow, secondary_stern, secondary_end_arc,
-                 torpedoes_type, torpedoes_mount, torpedoes_total, torpedoes_size):
+                 primary_broadside, primary_bow, primary_stern, primary_mount, primary_end_arc,
+                 secondary_fire_effect_table, secondary_total, secondary_broadside, secondary_bow, secondary_stern,
+                 secondary_mount, secondary_end_arc, torpedoes_type, torpedoes_mount, torpedoes_total, torpedoes_size):
         # General data
         self.name = name
         self.hull_class = hull_class
@@ -249,6 +249,7 @@ class Ship:
         self.primary_broadside = primary_broadside
         self.primary_bow = primary_bow
         self.primary_stern = primary_stern
+        self.primary_mount = primary_mount
         self.primary_end_arc = primary_end_arc
         # Skip secondary battery Gun creation if the ship has no significant secondary armament.
         if secondary_fire_effect_table != "NA":
@@ -260,6 +261,7 @@ class Ship:
         self.secondary_broadside = secondary_broadside
         self.secondary_bow = secondary_bow
         self.secondary_stern = secondary_stern
+        self.secondary_mount = secondary_mount
         self.secondary_end_arc = secondary_end_arc
         # Torpedo tubes might be implemented in the future.
         self.torpedoes_type = torpedoes_type
@@ -284,7 +286,25 @@ class Ship:
         # Incoming fire data
         self.incoming_fire = pd.DataFrame(columns=["ship_name", "guns_firing", "caliber", "range"])
 
-    def calculate_primary_salvo_size(self, target_bearing):
+    def calculate_turret_arc(self, target_bearing):
+        if target_bearing > 180:
+            target_bearing = 180 - (target_bearing % 180)
+        if target_bearing < self.primary_end_arc:
+            return "bow"
+        elif target_bearing > (180 - self.primary_end_arc):
+            return "stern"
+        else:
+            return "broadside"
+
+    def calculate_turrets_bearing(self, turret_arc):
+        if turret_arc == "bow":
+            return self.primary_bow
+        elif turret_arc == "stern":
+            return self.primary_stern
+        else:
+            return self.primary_broadside
+
+    def calculate_primary_salvo_size(self, turret_arc):
         """Calculates the number of guns bearing on a target based on its bearing.
 
         Parameters:
@@ -292,17 +312,8 @@ class Ship:
 
         Returns: an integer representing the number of guns that can fire at a target at the input bearing.
         """
-        if target_bearing > 180:
-            target_bearing = 180 - (target_bearing % 180)
-        # Check the arc within which the target lies.
-        if target_bearing < self.primary_end_arc:
-            salvo_size = self.primary_bow
-        elif target_bearing > (180 - self.primary_end_arc):
-            salvo_size = self.primary_stern
-        else:
-            salvo_size = self.primary_broadside
-
-        return salvo_size
+        turrets_bearing = self.calculate_turrets_bearing(turret_arc)
+        return turrets_bearing * self.primary_mount
 
     def return_base_hits(self, target_size, target_range, target_bearing, spot_type):
         """Returns the (deterministic) average number of hits expected per move, without any negative modifiers. This
@@ -322,7 +333,8 @@ class Ship:
         Returns: a float indicating the expected base number of hits.
         """
 
-        salvo_size = self.calculate_primary_salvo_size(target_bearing)
+        turrets_bearing = self.calculate_turret_arc(target_bearing)
+        salvo_size = self.calculate_primary_salvo_size(turrets_bearing)
         rate_of_fire = self.primary_armament.return_rate_of_fire(target_range)
         base_to_hit = self.primary_armament.return_hit_percentage(target_size, target_range, spot_type)
         base_hits = salvo_size * rate_of_fire * base_to_hit
@@ -341,9 +353,41 @@ class Ship:
                 target_list.append(side_a.groups[target_group].ships[ship])
 
         for ship in target_list:
+            turret_arc = self.calculate_turret_arc(target_bearing)
             penetration = self.primary_armament.return_side_penetration(ship.side, target_deflection, target_range)
-            self.target_data.loc[ship.name] = (firing_group, target_group, ship.name, fire, 0, target_bearing,
+            self.target_data.loc[ship.name] = (firing_group, target_group, ship.name, fire, 0, turret_arc,
                                                target_range, evasive, target_deflection, penetration)
+
+    def allocate_turrets(self):
+        target_bearings = self.target_data['target_bearing'].tolist()
+        bow_targets = stern_targets = broadside_targets = 0
+        # Check whether the bow arc is engaged.
+        if "bow" in target_bearings:
+            bow_turrets = self.primary_bow
+            bow_targets = self.target_data['target_bearing'].value_counts()['bow']
+
+        # Check whether the stern arc is engaged.
+        if "stern" in target_bearings:
+            stern_turrets = self.primary_stern
+            stern_targets = self.target_data['target_bearing'].value_counts()['stern']
+
+        # Check whether the broadside is engaged. Remove one turret from it if either bow or stern are engaged, two
+        # if both are engaged.
+        if "broadside" in target_bearings:
+            broadside_turrets = self.primary_broadside
+            if bow_targets > 0:
+                broadside_turrets -= 1
+            if stern_targets > 0:
+                broadside_turrets -= 1
+            broadside_targets = self.target_data['target_bearing'].value_counts()['broadside']
+            # Allocate turrets to all targets in a broadside arc.
+            broadside_turrets_per_target = broadside_turrets // broadside_targets
+            remaining_broadside_turrets = broadside_turrets % broadside_targets
+            self.target_data.loc[(self.target_data['fire']) &
+                                 (self.target_data['target_bearing'] == "broadside"),
+                                 "allocated_turrets"] = broadside_turrets_per_target
+
+        return broadside_targets
 
     def return_first_correction(self, target):
         """Returns the first correction to gunfire – a ratio which reduces rate of fire. It begins at a value of 1
@@ -373,7 +417,7 @@ class Ship:
             else:
                 print("Opening fire!")
                 # Keep track of whether fire is being opened, as it affects other rules.
-                opening_fire = True
+                # opening_fire = True
                 target_range = self.target_data["target_range"][target]
                 if target_range > 25:
                     first_correction -= 1
@@ -427,10 +471,10 @@ class Side:
 
 
 # Test ships (Australia)
-sydney = Ship("Sydney", "CL", "small", 3.17, 3, 2, "6-in-50", 8, 4, 2, 2, 45, "NA", "NA", "NA", "NA", "NA", "NA",
-              "B 21 in", "S", 2, 2)
-brisbane = Ship("Brisbane", "CL", "small", 3.17, 3, 2, "6-in-50", 8, 4, 2, 2, 45, "NA", "NA", "NA", "NA", "NA", "NA",
-                "B 21 in", "S", 2, 2)
+sydney = Ship("Sydney", "CL", "small", 3.17, 3, 2, "6-in-50", 8, 4, 2, 2, 1, 45, "NA", "NA", "NA", "NA", "NA", "NA",
+              "NA", "B 21 in", "S", 2, 2)
+brisbane = Ship("Brisbane", "CL", "small", 3.17, 3, 2, "6-in-50", 8, 4, 2, 2, 1, 45, "NA", "NA", "NA", "NA", "NA", "NA",
+                "NA", "B 21 in", "S", 2, 2)
 
 # Test ship motion data
 sydney.initial_speed = brisbane.initial_speed = 12
@@ -439,10 +483,10 @@ sydney.initial_course = brisbane.initial_course = 90
 sydney.current_course = brisbane.current_course = 120
 
 # Test ships (Germany
-emden = Ship("Emden", "CL", "small", 2.37, 3, 1.2, "4-in-45-A", 10, 5, 2, 2, 30, "NA", "NA", "NA", "NA", "NA", "NA",
-             "B 17.7 in", "S", 2, 2)
-dresden = Ship("Dresden", "CL", "small", 2.37, 3, 1.2, "4-in-45-A", 10, 5, 2, 2, 30, "NA", "NA", "NA", "NA", "NA", "NA",
-               "B 17.7 in", "S", 2, 2)
+emden = Ship("Emden", "CL", "small", 2.37, 3, 1.2, "4-in-45-A", 10, 5, 2, 2, 1, 30, "NA", "NA", "NA", "NA", "NA", "NA",
+             "NA", "B 17.7 in", "S", 2, 2)
+dresden = Ship("Dresden", "CL", "small", 2.37, 3, 1.2, "4-in-45-A", 10, 5, 2, 2, 1, 30, "NA", "NA", "NA", "NA", "NA",
+               "NA", "NA", "B 17.7 in", "S", 2, 2)
 
 # Test ship motion data
 emden.initial_speed = dresden.initial_speed = 10
@@ -471,14 +515,16 @@ emden.target("side_b", "Emden and Dresden", "Brisbane and Sydney", ["Brisbane"],
 emden.previous_target_data = emden.target_data.copy()
 # Target again, firing this time
 emden.target("side_b", "Emden and Dresden", "Brisbane and Sydney", ["Brisbane"], True, 10, 70, True, 75)
+emden.target("side_b", "Emden and Dresden", "Brisbane and Sydney", ["Sydney"], True, 10, 70, True, 75)
 
 # Check range rate on target
 range_rate = abs(emden.target_data["target_range"]["Brisbane"] - emden.previous_target_data["target_range"]["Brisbane"])
 print(range_rate)
 
 # Print target data
+print(emden.return_first_correction("Brisbane"))
+emden.allocate_turrets()
+
 with pd.option_context('display.max_rows', 5, 'display.max_columns', None, 'display.width', None):
     print(emden.previous_target_data)
     print(emden.target_data)
-
-print(emden.return_first_correction("Brisbane"))
