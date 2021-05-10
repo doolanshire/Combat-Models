@@ -274,10 +274,10 @@ class Ship:
         # Target data
         self.remainder_hits = 0
 
-        self.previous_target_data = pd.DataFrame(columns=["firing group", "target group", "target_name", "fire",
+        self.previous_target_data = pd.DataFrame(columns=["firing_group", "target_group", "target_name", "fire",
                                                           "allocated_turrets", "target_bearing", "target_range",
                                                           "evasive", "target_deflection", "penetration"])
-        self.target_data = pd.DataFrame(columns=["firing group", "target group", "target_name", "fire",
+        self.target_data = pd.DataFrame(columns=["firing_group", "target_group", "target_name", "fire",
                                                  "allocated_turrets", "target_bearing", "target_range", "evasive",
                                                  "target_deflection", "penetration"])
 
@@ -364,17 +364,26 @@ class Ship:
         # First check whether the target has been fired at before for one full move.
         if (target not in self.previous_target_data.index or
                 (target in self.previous_target_data.index and not self.previous_target_data["fire"][target])):
-            target_range = self.target_data["target_range"][target]
-            if target_range > 25:
-                first_correction -= 1
-            elif target_range >= 21:
-                first_correction -= 0.8
-            elif target_range >= 16:
-                first_correction -= 0.6
-            elif target_range >= 11:
-                first_correction -= 0.4
-            elif target_range >= 6:
-                first_correction -= 0.2
+            target_group = self.target_data["target_group"][target]
+            if ((self.previous_target_data['target_group'] == target_group) &
+               self.previous_target_data['fire']).any():
+                print("Fire shifted!")
+                first_correction -= 0.3
+
+            else:
+                # Keep track of whether fire is being opened, as it affects other rules.
+                # opening_fire = True
+                target_range = self.target_data["target_range"][target]
+                if target_range > 25:
+                    first_correction -= 1
+                elif target_range >= 21:
+                    first_correction -= 0.8
+                elif target_range >= 16:
+                    first_correction -= 0.6
+                elif target_range >= 11:
+                    first_correction -= 0.4
+                elif target_range >= 6:
+                    first_correction -= 0.2
 
             # PENDING: implement firing at a different target in the same formation.
 
@@ -416,37 +425,37 @@ class Side:
         self.groups = groups
 
 
-# Test ship
+# Test ships (Australia)
 sydney = Ship("Sydney", "CL", "small", 3.17, 3, 2, "6-in-50", 8, 4, 2, 2, 45, "NA", "NA", "NA", "NA", "NA", "NA",
               "B 21 in", "S", 2, 2)
+brisbane = Ship("Brisbane", "CL", "small", 3.17, 3, 2, "6-in-50", 8, 4, 2, 2, 45, "NA", "NA", "NA", "NA", "NA", "NA",
+                "B 21 in", "S", 2, 2)
 
 # Test ship motion data
-sydney.initial_speed = 12
-sydney.current_speed = 14
-sydney.initial_course = 90
-sydney.current_course = 120
+sydney.initial_speed = brisbane.initial_speed = 12
+sydney.current_speed = brisbane.current_speed = 14
+sydney.initial_course = brisbane.initial_course = 90
+sydney.current_course = brisbane.current_course = 120
 
-# Test ship
+# Test ships (Germany
 emden = Ship("Emden", "CL", "small", 2.37, 3, 1.2, "4-in-45-A", 10, 5, 2, 2, 30, "NA", "NA", "NA", "NA", "NA", "NA",
              "B 17.7 in", "S", 2, 2)
-
-# Test ship motion data
-emden.initial_speed = 10
-emden.current_speed = 15
-emden.initial_course = 80
-emden.current_course = 90
-
-# Test ship
 dresden = Ship("Dresden", "CL", "small", 2.37, 3, 1.2, "4-in-45-A", 10, 5, 2, 2, 30, "NA", "NA", "NA", "NA", "NA", "NA",
                "B 17.7 in", "S", 2, 2)
 
+# Test ship motion data
+emden.initial_speed = dresden.initial_speed = 10
+emden.current_speed = dresden.current_speed = 15
+emden.initial_course = dresden.initial_course = 80
+emden.current_course = dresden.current_course = 90
+
 # Test group ship dictionaries
-side_a_group_ships = {"Sydney": sydney}
+side_a_group_ships = {"Sydney": sydney, "Brisbane": brisbane}
 side_b_group_ships = {"Emden": emden, "Dresden": dresden}
 
 # Test groups
-side_a_groups = {"Sydney": Group("Sydney", side_a_group_ships, False)}
-side_b_groups = {"Emden and Dresden": Group("Emden", side_b_group_ships, True)}
+side_a_groups = {"Brisbane and Sydney": Group("Brisbane and Sydney", side_a_group_ships, False)}
+side_b_groups = {"Emden and Dresden": Group("Emden and Dresden", side_b_group_ships, True)}
 
 # Test sides
 side_a = Side("Australia", side_a_groups)
@@ -456,15 +465,11 @@ side_b = Side("Germany", side_b_groups)
 test_gun = Gun("6-in-50")
 
 # Target Sydney as Emden
-emden.target("side_b", "Emden and Dresden", "Sydney", ["Sydney"], False, 12, 85, True, 90)
+emden.target("side_b", "Emden and Dresden", "Brisbane and Sydney", ["Sydney"], False, 12, 85, True, 90)
 # Advance one turn
 emden.previous_target_data = emden.target_data.copy()
 # Target again, firing this time
-emden.target("side_b", "Emden and Dresden", "Sydney", ["Sydney"], True, 10, 70, True, 75)
-
-# Simulate first correction by checking whether Emden is opening fire on Sydney.
-opening_fire = ("Sydney" in emden.previous_target_data.index) and (not emden.previous_target_data["fire"]["Sydney"])
-print(opening_fire)
+emden.target("side_b", "Emden and Dresden", "Brisbane and Sydney", ["Sydney"], True, 10, 70, True, 75)
 
 # Check range rate on target
 range_rate = abs(emden.target_data["target_range"]["Sydney"] - emden.previous_target_data["target_range"]["Sydney"])
