@@ -345,7 +345,7 @@ class Ship:
             self.target_data.loc[ship.name] = (firing_group, target_group, ship.name, fire, 0, target_bearing,
                                                target_range, evasive, target_deflection, penetration)
 
-    def return_first_correction(self, target, target_range):
+    def return_first_correction(self, target):
         """Returns the first correction to gunfire – a ratio which reduces rate of fire. It begins at a value of 1
         (no reduction) and diminishes in steps of one tenth depending on circumstances affecting gunnery.
 
@@ -362,7 +362,9 @@ class Ship:
 
         # F-15: Check whether range has to be established.
         # First check whether the target has been fired at before for one full move.
-        if target not in self.previous_target_data:
+        if (target not in self.previous_target_data.index or
+                (target in self.previous_target_data.index and not self.previous_target_data["fire"][target])):
+            target_range = self.target_data["target_range"][target]
             if target_range > 25:
                 first_correction -= 1
             elif target_range >= 21:
@@ -472,3 +474,5 @@ print(range_rate)
 with pd.option_context('display.max_rows', 5, 'display.max_columns', None, 'display.width', None):
     print(emden.previous_target_data)
     print(emden.target_data)
+
+print(emden.return_first_correction("Sydney"))
