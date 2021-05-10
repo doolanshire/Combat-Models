@@ -371,8 +371,9 @@ class Ship:
                 first_correction -= 0.3
 
             else:
+                print("Opening fire!")
                 # Keep track of whether fire is being opened, as it affects other rules.
-                # opening_fire = True
+                opening_fire = True
                 target_range = self.target_data["target_range"][target]
                 if target_range > 25:
                     first_correction -= 1
@@ -465,14 +466,14 @@ side_b = Side("Germany", side_b_groups)
 test_gun = Gun("6-in-50")
 
 # Target Sydney as Emden
-emden.target("side_b", "Emden and Dresden", "Brisbane and Sydney", ["Sydney"], False, 12, 85, True, 90)
+emden.target("side_b", "Emden and Dresden", "Brisbane and Sydney", ["Brisbane"], False, 12, 85, True, 90)
 # Advance one turn
 emden.previous_target_data = emden.target_data.copy()
 # Target again, firing this time
-emden.target("side_b", "Emden and Dresden", "Brisbane and Sydney", ["Sydney"], True, 10, 70, True, 75)
+emden.target("side_b", "Emden and Dresden", "Brisbane and Sydney", ["Brisbane"], True, 10, 70, True, 75)
 
 # Check range rate on target
-range_rate = abs(emden.target_data["target_range"]["Sydney"] - emden.previous_target_data["target_range"]["Sydney"])
+range_rate = abs(emden.target_data["target_range"]["Brisbane"] - emden.previous_target_data["target_range"]["Brisbane"])
 print(range_rate)
 
 # Print target data
@@ -480,4 +481,4 @@ with pd.option_context('display.max_rows', 5, 'display.max_columns', None, 'disp
     print(emden.previous_target_data)
     print(emden.target_data)
 
-print(emden.return_first_correction("Sydney"))
+print(emden.return_first_correction("Brisbane"))
