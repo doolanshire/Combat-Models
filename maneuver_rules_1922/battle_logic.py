@@ -360,16 +360,29 @@ class Ship:
 
     def allocate_turrets(self):
         target_bearings = self.target_data['target_bearing'].tolist()
-        bow_targets = stern_targets = broadside_targets = 0
+        bow_targets = stern_targets = 0
         # Check whether the bow arc is engaged.
+        remaining_bow_turrets = remaining_stern_turrets = remaining_broadside_turrets = 0
+
         if "bow" in target_bearings:
             bow_turrets = self.primary_bow
             bow_targets = self.target_data['target_bearing'].value_counts()['bow']
+            bow_turrets_per_target = bow_turrets // bow_targets
+            remaining_bow_turrets = bow_turrets % bow_targets
+            self.target_data.loc[(self.target_data['fire']) &
+                                 (self.target_data['target_bearing'] == "bow"),
+                                 "allocated_turrets"] = bow_turrets_per_target
 
         # Check whether the stern arc is engaged.
         if "stern" in target_bearings:
             stern_turrets = self.primary_stern
             stern_targets = self.target_data['target_bearing'].value_counts()['stern']
+            # Allocate turrets to all targets in a stern arc.
+            stern_turrets_per_target = stern_turrets // stern_targets
+            remaining_stern_turrets = stern_turrets % stern_targets
+            self.target_data.loc[(self.target_data['fire']) &
+                                 (self.target_data['target_bearing'] == "stern"),
+                                 "allocated_turrets"] = stern_turrets_per_target
 
         # Check whether the broadside is engaged. Remove one turret from it if either bow or stern are engaged, two
         # if both are engaged.
@@ -387,7 +400,17 @@ class Ship:
                                  (self.target_data['target_bearing'] == "broadside"),
                                  "allocated_turrets"] = broadside_turrets_per_target
 
-        return broadside_targets
+        # Iterate over the dataframe allocating the remaining turrets.
+        for i, row in self.target_data.loc[self.target_data['fire']].iterrows():
+            if row['target_bearing'] == "bow" and remaining_bow_turrets > 0:
+                self.target_data.at[i, 'allocated_turrets'] += 1
+                remaining_bow_turrets -= 1
+            if row['target_bearing'] == "stern" and remaining_stern_turrets > 0:
+                self.target_data.at[i, 'allocated_turrets'] += 1
+                remaining_stern_turrets -= 1
+            if row['target_bearing'] == "broadside" and remaining_broadside_turrets > 0:
+                self.target_data.at[i, 'allocated_turrets'] += 1
+                remaining_broadside_turrets -= 1
 
     def return_first_correction(self, target):
         """Returns the first correction to gunfire – a ratio which reduces rate of fire. It begins at a value of 1
