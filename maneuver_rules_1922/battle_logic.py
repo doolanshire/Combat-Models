@@ -498,12 +498,14 @@ sydney = Ship("Sydney", "CL", "small", 3.17, 3, 2, "6-in-50", 8, 4, 2, 2, 1, 45,
               "NA", "B 21 in", "S", 2, 2)
 brisbane = Ship("Brisbane", "CL", "small", 3.17, 3, 2, "6-in-50", 8, 4, 2, 2, 1, 45, "NA", "NA", "NA", "NA", "NA", "NA",
                 "NA", "B 21 in", "S", 2, 2)
+melbourne = Ship("Melbourne", "CL", "small", 3.17, 3, 2, "6-in-50", 8, 4, 2, 2, 1, 45, "NA", "NA", "NA", "NA", "NA",
+                 "NA", "NA", "B 21 in", "S", 2, 2)
 
 # Test ship motion data
-sydney.initial_speed = brisbane.initial_speed = 12
-sydney.current_speed = brisbane.current_speed = 14
-sydney.initial_course = brisbane.initial_course = 90
-sydney.current_course = brisbane.current_course = 120
+sydney.initial_speed = brisbane.initial_speed = melbourne.initial_speed = 12
+sydney.current_speed = brisbane.current_speed = melbourne.current_speed = 14
+sydney.initial_course = brisbane.initial_course = melbourne.initial_course = 90
+sydney.current_course = brisbane.current_course = melbourne.current_course = 120
 
 # Test ships (Germany
 emden = Ship("Emden", "CL", "small", 2.37, 3, 1.2, "4-in-45-A", 10, 5, 2, 2, 1, 30, "NA", "NA", "NA", "NA", "NA", "NA",
@@ -518,11 +520,11 @@ emden.initial_course = dresden.initial_course = 80
 emden.current_course = dresden.current_course = 90
 
 # Test group ship dictionaries
-side_a_group_ships = {"Sydney": sydney, "Brisbane": brisbane}
+side_a_group_ships = {"Sydney": sydney, "Brisbane": brisbane, "Melbourne": melbourne}
 side_b_group_ships = {"Emden": emden, "Dresden": dresden}
 
 # Test groups
-side_a_groups = {"Brisbane and Sydney": Group("Brisbane and Sydney", side_a_group_ships, False)}
+side_a_groups = {"Brisbane, Sydney and Melbourne": Group("Brisbane, Sydney and Melbourne", side_a_group_ships, False)}
 side_b_groups = {"Emden and Dresden": Group("Emden and Dresden", side_b_group_ships, True)}
 
 # Test sides
@@ -533,12 +535,14 @@ side_b = Side("Germany", side_b_groups)
 test_gun = Gun("6-in-50")
 
 # Target Sydney as Emden
-emden.target("side_b", "Emden and Dresden", "Brisbane and Sydney", ["Brisbane"], False, 12, 85, True, 90)
+emden.target("side_b", "Emden and Dresden", "Brisbane, Sydney and Melbourne", ["Brisbane"], False, 12, 85, True, 90)
 # Advance one turn
 emden.previous_target_data = emden.target_data.copy()
 # Target again, firing this time
-emden.target("side_b", "Emden and Dresden", "Brisbane and Sydney", ["Brisbane"], True, 10, 70, True, 75)
-emden.target("side_b", "Emden and Dresden", "Brisbane and Sydney", ["Sydney"], True, 10, 70, True, 75)
+emden.target("side_b", "Emden and Dresden", "Brisbane, Sydney and Melbourne", ["Brisbane"], True, 10, 70, True, 75)
+emden.target("side_b", "Emden and Dresden", "Brisbane, Sydney and Melbourne", ["Sydney"], True, 10, 70, True, 75)
+
+emden.target("side_b", "Emden and Dresden", "Brisbane, Sydney and Melbourne", ["Melbourne"], True, 10, 70, True, 75)
 
 # Check range rate on target
 range_rate = abs(emden.target_data["target_range"]["Brisbane"] - emden.previous_target_data["target_range"]["Brisbane"])
