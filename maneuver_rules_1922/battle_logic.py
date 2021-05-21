@@ -19,25 +19,14 @@ class Gun:
 
     For example, '6-in-50' or '13.5-in-45'.
 
-    :param gun_designation: the gun's designation as explained above.
-    :type gun_designation: str
-
-    :attr projectile_weight: the projectile weight in lbs. Not used by the simulation.
-    :type projectile_weight: float
-
-    :attr muzzle_velocity: the gun's muzzle velocity in feet per second. Not used by the simulation.
-    :type muzzle_velocity: int
-
-    :attr maximum_range: the gun's maximum range in thousands of yards.
-    :type maximum_range: int
-
-    :attr hit_percentage: a dictionary containing Pandas dataframes. Holds to-hit chances at different ranges
+    :param str gun_designation: the gun's designation as explained above.
+    :attr float projectile_weight: the projectile weight in lbs. Not used by the simulation.
+    :attr int muzzle_velocity: the gun's muzzle velocity in feet per second. Not used by the simulation.
+    :attr int maximum_range: the gun's maximum range in thousands of yards.
+    :attr dict hit_percentage: a dictionary containing Pandas dataframes. Holds to-hit chances at different ranges
     (at 1000-yard intervals) and for different spot types (top, kite or plane).
-    :type hit_percentage: dict
-
-    :attr rate_of_fire: a Pandas dataframe with the expected rates of fire of any given gun when firing at different
-    ranges (also at 1000-yard intervals).
-    :type rate_of_fire: DataFrame
+    :attr DataFrame rate_of_fire: a Pandas dataframe with the expected rates of fire of any given gun when firing at
+    different ranges (also at 1000-yard intervals).
     """
 
     # GUN TYPES TABLE (projectile weight, muzzle velocity and maximum range)
@@ -62,9 +51,7 @@ class Gun:
     non_penetrative_values = pd.read_csv(non_penetrative_path, index_col="caliber", dtype=float)
 
     def __init__(self, gun_designation):
-        """
-        :param gun_designation: the gun's designation as explained above.
-        :type gun_designation: string
+        """:param string gun_designation: the gun's designation as explained above.
         """
         self.designation = gun_designation
         # Define the path for the gun's fire effect tables
@@ -112,7 +99,15 @@ class Gun:
                                                        dtype=float)
 
     def return_hit_percentage(self, target_size, target_range, spot_type):
-        """Returns the hit percentage of the gun for a given target size, range and spot type."""
+        """Returns the hit percentage of the gun for a given target size, range and spot type.
+
+        :param str target_size: the size designation of the target ('large', 'intermediate', 'small', 'destroyer' or
+        'submarine')
+        :param int target_range: the range to the target in thousands of yards.
+        :param str spot_type: the spot type (top, plane or kite).
+        :returns, return: the hit percentage for the given target size, range and spot type.
+        :rtype: float
+        """
         target_range = int(target_range)
         if target_range > self.maximum_range:
             return 0
@@ -124,13 +119,25 @@ class Gun:
             return (shorter_range + longer_range) / 2 / 100
 
     def return_rate_of_fire(self, target_range):
-        """Returns the rate of fire for the gun at a given range."""
+        """Returns the rate of fire for the gun at a given range.
+
+        :param int target_range: the range to the target in thousands of yards.
+        :returns, return: the rate of fire for the gun at the given range.
+        :rtype: float
+        """
         if target_range > self.maximum_range:
             return 0
         else:
             return self.rate_of_fire[self.designation][target_range]
 
     def return_hit_value(self, target_size, penetrative):
+        """Return the multiplier value needed to convert a hit from this gun to the 14-inch equivalent.
+
+        :param str target_size: the size of the target ('large', 'intermediate', 'small', 'destroyer' or 'submarine'.
+        :param boolean penetrative: whether the hit is penetrative or not.
+        :returns, return: the multiplier needed for conversion.
+        :rtype: float
+        """
         if penetrative:
             if target_size == "submarine":
                 return self.penetrative_values[target_size][self.caliber]
@@ -141,17 +148,26 @@ class Gun:
             return self.non_penetrative_values[target_size][self.caliber]
 
     def return_side_penetration(self, armor, deflection, target_range):
-        # If armor is thicker than the range tables predict, return False.
+        """Return whether a shot from this gun would penetrate the target's side (belt) armour.
+
+        :param float armor: the side armour of the target in inches.
+        :param int deflection: the deflection angle of the shot in degrees.
+        :param int target_range: the range to the target in thousands of yards.
+        :returns, return: whether the shot penetrates the target's side armour.
+        :rtype: boolean
+        """
+        # If armor is thicker than the highest value in the tables, return False.
         armor_values = self.side_penetration_ranges.index
         if armor > max(armor_values):
             return False
 
-        # Else.
-        # Round to the nearest 15 degrees and obtain the appropriate column.
+        # Else,
+        # Round the deflection to the nearest 15 degrees and obtain the appropriate column.
         if deflection > 90:
             deflection -= (deflection // 90) * 90
 
         deflection = round(deflection / 15) * 15
+
         if deflection == 90 or deflection == 0:
             deflection = "90 or 0"
         elif deflection == 75 or deflection == 15:
@@ -176,13 +192,21 @@ class Gun:
             return False
 
     def return_deck_penetration(self, armor, target_range):
-        # Deck penetration only applies to guns 5.5 inches or larger.
+        """Return whether a shot fromt his gun would penetrate the deck armour of the target at a given range.
+
+        :param float armor: the deck armour of the target in inches.
+        :param int target_range: the range to the target in thousands of yards.
+        :returns, return: whether the shot penetrates the target's deck armour.
+        :rtype: boolean
+        """
+        # Deck penetration only has an effect for guns 5.5 inches or larger.
         if self.caliber < 5.5:
             return False
 
         else:
+            # List all the armour values listed in the penetration table.
             armor_values = self.deck_penetration_ranges.index
-            # Return false if the armour is thicker than what is listed in the penetration tables.
+            # Return false if the armour is thicker than the maximum value in the tables.
             if armor > max(armor_values):
                 return False
             # Likewise, return True if the armour is thinner than the minimum value listed.
@@ -190,18 +214,19 @@ class Gun:
                 return True
 
             # Else.
-            # Check for the nearest armor value.
+            # From the armour values listed in the table, return the nearest to the target's.
             if armor not in armor_values:
                 armor = min(armor_values, key=lambda x: abs(x - armor))
 
-            # Return false if the range listed for that armor value is NAN.
+            # Return False if the range listed for that armor value is NAN.
             if pd.isnull(self.deck_penetration_ranges.loc[armor, "target_range"]):
                 return False
 
-            # Else.
+            # Else, if the target is within the range in which deck penetration can occur, return True.
             if target_range >= self.deck_penetration_ranges.loc[armor, "target_range"]:
                 return True
 
+            # Return false in any other case.
             else:
                 return False
 
