@@ -18,13 +18,22 @@ Engagement information will eventually be stored in external CSV files so that d
 
 #### Program logic:
 
-* **Gun** class partially implemented.
+* The *Gun*, *Ship*, *Group* and *Side* classes and their methods are partially implemented.
+* The program can calculate (through methods belonging to the *Gun* class) rates of fire and basic to-hit chances at different ranges.
+* Rate of fire is corrected based on various firing circumstances, such as establishing range or shifting targets.
 
 #### Data:
 
 * **Fire effect tables** collected for the following guns:
     + 6-in/53
     + 6-in/50
+    + 4-in/50
+    + 4-in/45 (AA)
+    
+  These include the total fire effect for a three-minute move, rates of fire, hit percentages and armour penetration figures.
 
 ## To do
-Mostly everything
+* Finish the methods that apply corrections to rates of fire.
+* Implement the methods that apply corrections to to-hit chances.
+* Write the parser functions responsible for loading battle data.
+* Implement the *Battle* class and its methods to handle battle timeline creation etc.
