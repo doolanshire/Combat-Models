@@ -19,42 +19,66 @@ class Gun:
 
     For example, '6-in-50' or '13.5-in-45'.
 
-    The class attributes are:
-    - designation: the gun's designation as explained above.
-    - projectile_weight: the projectile weight in lbs.
-    - muzzle_velocity: the gun's muzzle velocity in feet per second.
-    - maximum_range: the gun's maximum range in thousands of yards.
-    - hit_percentage: a dictionary containing Pandas dataframes. Holds to-hit chances at different ranges (at 2000-yard
-    intervals) and for different spot types (top, kite or plane).
-    - rate_of_fire: a Pandas dataframe with the expected rates of fire of any given gun when firing at different ranges
-    (also at 2000-yard intervals).
+    :param gun_designation: the gun's designation as explained above.
+    :type gun_designation: str
+
+    :attr projectile_weight: the projectile weight in lbs. Not used by the simulation.
+    :type projectile_weight: float
+
+    :attr muzzle_velocity: the gun's muzzle velocity in feet per second. Not used by the simulation.
+    :type muzzle_velocity: int
+
+    :attr maximum_range: the gun's maximum range in thousands of yards.
+    :type maximum_range: int
+
+    :attr hit_percentage: a dictionary containing Pandas dataframes. Holds to-hit chances at different ranges
+    (at 1000-yard intervals) and for different spot types (top, kite or plane).
+    :type hit_percentage: dict
+
+    :attr rate_of_fire: a Pandas dataframe with the expected rates of fire of any given gun when firing at different
+    ranges (also at 1000-yard intervals).
+    :type rate_of_fire: DataFrame
     """
 
+    # GUN TYPES TABLE (projectile weight, muzzle velocity and maximum range)
+    gun_types_path = "fire_effect_tables/{}/gun_types.csv".format(FIRE_EFFECT_TABLES_EDITION)
+    # Load the gun types dataframe.
+    general_data = pd.read_csv(gun_types_path, index_col="designation", na_values="--")
+
+    # RATE OF FIRE
+
+    # Define the path for the rates of fire table.
+    rates_of_fire_path = "fire_effect_tables/{}/rates_of_fire.csv".format(FIRE_EFFECT_TABLES_EDITION)
+    # Create a rate of fire dataframe.
+    rate_of_fire = pd.read_csv(rates_of_fire_path, index_col='range', na_values="--", dtype=float)
+
+    # HIT VALUE CONVERSION FACTORS
+
+    # Define the paths for the hit value tables.
+    penetrative_path = "fire_effect_tables/{}/hit_values_penetrative.csv".format(FIRE_EFFECT_TABLES_EDITION)
+    non_penetrative_path = "fire_effect_tables/{}/hit_values_non_penetrative.csv".format(FIRE_EFFECT_TABLES_EDITION)
+    # Load the data.
+    penetrative_values = pd.read_csv(penetrative_path, index_col="caliber", dtype=float)
+    non_penetrative_values = pd.read_csv(non_penetrative_path, index_col="caliber", dtype=float)
+
     def __init__(self, gun_designation):
+        """
+        :param gun_designation: the gun's designation as explained above.
+        :type gun_designation: string
+        """
         self.designation = gun_designation
         # Define the path for the gun's fire effect tables
         fire_effect_tables_path = "fire_effect_tables/{}/{}/".format(FIRE_EFFECT_TABLES_EDITION, gun_designation)
 
         # GENERAL DATA
 
+        # The gun caliber in inches.
         self.caliber = float(self.designation.split("-")[0])
 
-        # Load the gun types dataframe.
-        gun_types_path = "fire_effect_tables/{}/gun_types.csv".format(FIRE_EFFECT_TABLES_EDITION)
-        general_data = pd.read_csv(gun_types_path, index_col="designation", na_values="--")
         # Fill out the gun's general data.
-        self.projectile_weight = int(general_data["projectile_weight"][self.designation])
-        self.muzzle_velocity = int(general_data["muzzle_velocity"][self.designation])
-        self.maximum_range = int(general_data["maximum_range"][self.designation])
-
-        # HIT VALUE CONVERSION FACTORS
-
-        # Define the paths for the hit value tables.
-        penetrative_path = "fire_effect_tables/{}/hit_values_penetrative.csv".format(FIRE_EFFECT_TABLES_EDITION)
-        non_penetrative_path = "fire_effect_tables/{}/hit_values_non_penetrative.csv".format(FIRE_EFFECT_TABLES_EDITION)
-        # Load the data.
-        self.penetrative_values = pd.read_csv(penetrative_path, index_col="caliber", dtype=float)
-        self.non_penetrative_values = pd.read_csv(non_penetrative_path, index_col="caliber", dtype=float)
+        self.projectile_weight = int(Gun.general_data["projectile_weight"][self.designation])
+        self.muzzle_velocity = int(Gun.general_data["muzzle_velocity"][self.designation])
+        self.maximum_range = int(Gun.general_data["maximum_range"][self.designation])
 
         # HIT PERCENTAGE
 
@@ -71,29 +95,18 @@ class Gun:
         if os.path.exists(plane_spot_path):
             self.hit_percentage["plane"] = pd.read_csv(plane_spot_path, index_col='range', na_values="--", dtype=float)
 
-        # RATE OF FIRE
-
-        # Define the path for the rates of fire table.
-        rates_of_fire_path = "fire_effect_tables/{}/rates_of_fire.csv".format(FIRE_EFFECT_TABLES_EDITION)
-
-        # Create a rate of fire dataframe.
-        self.rate_of_fire = pd.read_csv(rates_of_fire_path, index_col='range', na_values="--", dtype=float)
-
         # ARMOUR PENETRATION
 
         # Define the path for the side armor penetration ranges table.
         side_penetration_ranges_path = "{}{}_side_penetration_ranges.csv".format(fire_effect_tables_path,
                                                                                  self.designation)
-
         # Create a side penetration ranges dataframe.
         self.side_penetration_ranges = pd.read_csv(side_penetration_ranges_path, index_col='armor', na_values='---',
                                                    dtype=float)
-
-        # Define the path for the deck penetration ranges table.
+        # Define the path for the deck penetration ranges table only for guns 5.5 inches or greater.
         if self.caliber >= 5.5:
             deck_penetration_ranges_path = "{}{}_deck_penetration_ranges.csv".format(fire_effect_tables_path,
                                                                                      self.designation)
-
             # Create a deck penetration ranges dataframe.
             self.deck_penetration_ranges = pd.read_csv(deck_penetration_ranges_path, index_col='armor', na_values='X',
                                                        dtype=float)
