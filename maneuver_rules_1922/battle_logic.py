@@ -12,25 +12,68 @@ FIRE_EFFECT_TABLES_EDITION = "1930"
 
 
 class Gun:
-    """A naval gun. All parameters are loaded from external data files upon object creation. The only input needed is
-    the gun's designation, which follows the format:
+    """A naval gun. All parameters are loaded from external data files upon object creation.
 
-    [caliber]-in-[length]
+    The following Class variables exist, containing information relevant to all Gun instances:
+    - general_data (DataFrame): a table listing the caliber, projectile weight, muzzle velocity and maximum range of all
+    gun denominations, as well as the navies in which they saw service.
+    - penetrative_values (DataFrame): a table listing the multipliers needed to convert penetrative hits from every
+    caliber to equivalent 14-inch hits.
+    - non_penetrative_values (DataFrame): a table listing the multipliers needed to convert non-penetrative hits from
+    every caliber to equivalent 14-inch hits.
+    - rate_of_fire (DataFrame): a table listing the rates of fire of all gun designations at all ranges (in 1000-yard
+    increments).
 
-    For example, '6-in-50' or '13.5-in-45'.
-
-    The class attributes are:
-    - designation: the gun's designation as explained above.
-    - projectile_weight: the projectile weight in lbs.
-    - muzzle_velocity: the gun's muzzle velocity in feet per second.
-    - maximum_range: the gun's maximum range in thousands of yards.
-    - hit_percentage: a dictionary containing Pandas dataframes. Holds to-hit chances at different ranges (at 2000-yard
-    intervals) and for different spot types (top, kite or plane).
-    - rate_of_fire: a Pandas dataframe with the expected rates of fire of any given gun when firing at different ranges
-    (also at 2000-yard intervals).
+    Instance variables are documented in the constructor method docstring.
     """
 
+    # GUN TYPES
+    # Load the CSV file containing general data for all gun designations.
+    gun_types_path = "fire_effect_tables/{}/gun_types.csv".format(FIRE_EFFECT_TABLES_EDITION)
+    general_data = pd.read_csv(gun_types_path, index_col="designation", na_values="--")
+
+    # HIT VALUE CONVERSION FACTORS
+    # Define the paths for the hit value tables.
+    penetrative_path = "fire_effect_tables/{}/hit_values_penetrative.csv".format(FIRE_EFFECT_TABLES_EDITION)
+    non_penetrative_path = "fire_effect_tables/{}/hit_values_non_penetrative.csv".format(FIRE_EFFECT_TABLES_EDITION)
+    # Load the data.
+    penetrative_values = pd.read_csv(penetrative_path, index_col="caliber", dtype=float)
+    non_penetrative_values = pd.read_csv(non_penetrative_path, index_col="caliber", dtype=float)
+
+    # RATE OF FIRE
+    # Define the path for the rates of fire table.
+    rates_of_fire_path = "fire_effect_tables/{}/rates_of_fire.csv".format(FIRE_EFFECT_TABLES_EDITION)
+    # Create a rate of fire dataframe.
+    rate_of_fire = pd.read_csv(rates_of_fire_path, index_col='range', na_values="--", dtype=float)
+
     def __init__(self, gun_designation):
+        """All parameters for each individual gun are loaded from external CSV files and calculated upon creation of
+        each instance. The only necessary parameter to create a gun is its designation, following the format:
+
+        [caliber]-in-[length]
+
+        For example, '6-in-50' means the 6-inch/50 gun.
+         
+        Guns in AA mounts append '-A' to the designation (e.g. '4-in-45-A' is the 4-inch/45 AA gun).
+         
+        Parameters:
+            - gun_designation (string): the text string of the gun's designation as described above.
+             
+        Attributes:
+            - caliber (float): the gun's caliber in inches.
+            - projectile_weight (float): the projectile weight in lbs.
+            - muzzle_velocity (int): the muzzle velocity in feet per second.
+            - maximum_range (int): the gun's maximum range in thousands of yards.
+            - hit_percentage (dict): a dictionary of Pandas DataFrames listing the gun's hit percentages at different
+              firing ranges (in 1000-yard intervals) and for different target sizes ("large", "intermediate", "small",
+              "destroyer" and "submarine". The dictionary keys are the different spot types ("top", "kite" and "plane").
+              Note that only the 1922 revision of the rules uses kite spot.
+            - side_penetration_ranges (DataFrame): a table listing the range limits for side (belt) penetration of
+              various armor thicknesses.
+            - deck_penetration_ranges (DataFrame): a table listing the range limits for deck penetration of various
+              armor thicknesses. Only applies to guns 5.5 inches in caliber or greater.
+        """
+
         self.designation = gun_designation
         # Define the path for the gun's fire effect tables
         fire_effect_tables_path = "fire_effect_tables/{}/{}/".format(FIRE_EFFECT_TABLES_EDITION, gun_designation)
@@ -39,22 +82,10 @@ class Gun:
 
         self.caliber = float(self.designation.split("-")[0])
 
-        # Load the gun types dataframe.
-        gun_types_path = "fire_effect_tables/{}/gun_types.csv".format(FIRE_EFFECT_TABLES_EDITION)
-        general_data = pd.read_csv(gun_types_path, index_col="designation", na_values="--")
         # Fill out the gun's general data.
-        self.projectile_weight = int(general_data["projectile_weight"][self.designation])
-        self.muzzle_velocity = int(general_data["muzzle_velocity"][self.designation])
-        self.maximum_range = int(general_data["maximum_range"][self.designation])
-
-        # HIT VALUE CONVERSION FACTORS
-
-        # Define the paths for the hit value tables.
-        penetrative_path = "fire_effect_tables/{}/hit_values_penetrative.csv".format(FIRE_EFFECT_TABLES_EDITION)
-        non_penetrative_path = "fire_effect_tables/{}/hit_values_non_penetrative.csv".format(FIRE_EFFECT_TABLES_EDITION)
-        # Load the data.
-        self.penetrative_values = pd.read_csv(penetrative_path, index_col="caliber", dtype=float)
-        self.non_penetrative_values = pd.read_csv(non_penetrative_path, index_col="caliber", dtype=float)
+        self.projectile_weight = int(Gun.general_data["projectile_weight"][self.designation])
+        self.muzzle_velocity = int(Gun.general_data["muzzle_velocity"][self.designation])
+        self.maximum_range = int(Gun.general_data["maximum_range"][self.designation])
 
         # HIT PERCENTAGE
 
@@ -71,35 +102,33 @@ class Gun:
         if os.path.exists(plane_spot_path):
             self.hit_percentage["plane"] = pd.read_csv(plane_spot_path, index_col='range', na_values="--", dtype=float)
 
-        # RATE OF FIRE
-
-        # Define the path for the rates of fire table.
-        rates_of_fire_path = "fire_effect_tables/{}/rates_of_fire.csv".format(FIRE_EFFECT_TABLES_EDITION)
-
-        # Create a rate of fire dataframe.
-        self.rate_of_fire = pd.read_csv(rates_of_fire_path, index_col='range', na_values="--", dtype=float)
-
-        # ARMOUR PENETRATION
+        # armor PENETRATION
 
         # Define the path for the side armor penetration ranges table.
         side_penetration_ranges_path = "{}{}_side_penetration_ranges.csv".format(fire_effect_tables_path,
                                                                                  self.designation)
-
         # Create a side penetration ranges dataframe.
         self.side_penetration_ranges = pd.read_csv(side_penetration_ranges_path, index_col='armor', na_values='---',
                                                    dtype=float)
-
         # Define the path for the deck penetration ranges table.
         if self.caliber >= 5.5:
             deck_penetration_ranges_path = "{}{}_deck_penetration_ranges.csv".format(fire_effect_tables_path,
                                                                                      self.designation)
-
             # Create a deck penetration ranges dataframe.
             self.deck_penetration_ranges = pd.read_csv(deck_penetration_ranges_path, index_col='armor', na_values='X',
                                                        dtype=float)
 
     def return_hit_percentage(self, target_size, target_range, spot_type):
-        """Returns the hit percentage of the gun for a given target size, range and spot type."""
+        """Returns the hit percentage of the gun for a given target size, range and spot type.
+        
+        Parameters:
+            - target_size (string): the size of the target ("large", "intermediate", "small", "destroyer" or
+              "submarine").
+            - target_range (int): the range to the target in thousands of yards.
+            - spot_type (string): the type of spot used ("top", "plane" or "kite").
+            
+        Returns: the hit percentage (float).
+        """
         target_range = int(target_range)
         if target_range > self.maximum_range:
             return 0
@@ -111,23 +140,47 @@ class Gun:
             return (shorter_range + longer_range) / 2 / 100
 
     def return_rate_of_fire(self, target_range):
-        """Returns the rate of fire for the gun at a given range."""
+        """Returns the rate of fire for the gun at a given range.
+        
+        Parameters:
+            - target_range (int): the range to the target in thousands of yards.
+            
+        Returns: the rate of fire at the range given (float).
+        """
         if target_range > self.maximum_range:
             return 0
         else:
-            return self.rate_of_fire[self.designation][target_range]
+            return Gun.rate_of_fire[self.designation][target_range]
 
     def return_hit_value(self, target_size, penetrative):
+        """Returns the multiplier needed to convert a hit from the gun to the 14-inch hit equivalent.
+        
+        Attributes:
+            - penetrative (boolean): whether the hit is penetrative or not.
+        
+        Returns: the conversion factor (float).    
+        """
+        
         if penetrative:
             if target_size == "submarine":
-                return self.penetrative_values[target_size][self.caliber]
+                return Gun.penetrative_values[target_size][self.caliber]
             else:
-                return self.penetrative_values["large, intermediate, small, destroyer"][self.caliber]
+                return Gun.penetrative_values["large, intermediate, small, destroyer"][self.caliber]
 
         else:
-            return self.non_penetrative_values[target_size][self.caliber]
+            return Gun.non_penetrative_values[target_size][self.caliber]
 
     def return_side_penetration(self, armor, deflection, target_range):
+        """Returns whether the gun would penetrate the side (belt) armor of a target.
+        
+        Parameters:
+            - armor (float): the target's side armor in inches.
+            - deflection (int): the shot deflection in degrees. Converted to 15-degree increments within the method.
+            - target_range (int): the range to the target in thousands of yards.
+            
+        Returns: True if the shot penetrates, False if it does not.
+        """
+        
         # If armor is thicker than the range tables predict, return False.
         armor_values = self.side_penetration_ranges.index
         if armor > max(armor_values):
@@ -163,16 +216,23 @@ class Gun:
             return False
 
     def return_deck_penetration(self, armor, target_range):
+        """Returns whether the gun would penetrate the deck armor of a target.
+        
+        Attributes:
+            - armor (float): the target's deck armor in inches.
+            - target_range (int): the range to the target in thousands of yards.
+        """
+        
         # Deck penetration only applies to guns 5.5 inches or larger.
         if self.caliber < 5.5:
             return False
 
         else:
             armor_values = self.deck_penetration_ranges.index
-            # Return false if the armour is thicker than what is listed in the penetration tables.
+            # Return false if the armor is thicker than what is listed in the penetration tables.
             if armor > max(armor_values):
                 return False
-            # Likewise, return True if the armour is thinner than the minimum value listed.
+            # Likewise, return True if the armor is thinner than the minimum value listed.
             if armor < min(armor_values):
                 return True
 
@@ -203,15 +263,16 @@ class Ship:
         - hull class (string): BB, CC, CA, CL, DD, etc. For a list of possible values check the file "life_coefficients"
         in the helper_functions directory.
         - size (string): large, intermediate, small, destroyer or submarine.
-        - side (float): the side (belt) armour amidships, in inches.
-        - deck (float): the deck armour amidships, in inches.
+        - side (float): the side (belt) armor amidships, in inches.
+        - deck (float): the deck armor amidships, in inches.
 
         *Primary armament*
         - primary_fire_effect_table (string): the fire effect table used by the primary armament (e.g. "6-in-50").
-        - primary_total (int): the number of guns in the main battery.
-        - primary_broadside (int): the number of guns the ship can fire broadside-on.
-        - primary_bow (int): the number of guns the ship can fire at a target ahead.
-        - primary_stern (int): the number of guns the ship can fire at a target astern.
+        - primary_total (int): the number of turrets in the main battery.
+        - primary_broadside (int): the number of turrets the ship can fire broadside-on.
+        - primary_bow (int): the number of turrets the ship can fire at a target ahead.
+        - primary_stern (int): the number of turrets the ship can fire at a target astern.
+        - primary_mount (int): the number of guns per turret in the ship's primary armament.
         - primary_end_arc (int): the number of degrees from the bow or stern before the firing arc is considered to be
         broadside-on.
 
@@ -287,6 +348,14 @@ class Ship:
         self.incoming_fire = pd.DataFrame(columns=["ship_name", "guns_firing", "caliber", "range"])
 
     def calculate_turret_arc(self, target_bearing):
+        """Return the turret arc the target lies on.
+
+        Parameters:
+            - target_bearing (int): the target bearing in degrees.
+
+        Returns: a string ("broadside", "bow" or "stern") indicating the firing arc.
+        """
+
         if target_bearing > 180:
             target_bearing = 180 - (target_bearing % 180)
         if target_bearing < self.primary_end_arc:
@@ -297,6 +366,14 @@ class Ship:
             return "broadside"
 
     def calculate_turrets_bearing(self, turret_arc):
+        """Return the number of turrets bearing on a given arc.
+
+        Parameters:
+            - turret_arc (string): "broadside", "bow" or "stern".
+
+        Returns: the number of turrets bearing on the specified arc (int).
+        """
+
         if turret_arc == "bow":
             return self.primary_bow
         elif turret_arc == "stern":
@@ -305,13 +382,14 @@ class Ship:
             return self.primary_broadside
 
     def calculate_primary_salvo_size(self, turret_arc):
-        """Calculates the number of guns bearing on a target based on its bearing.
+        """Calculates the number of guns bearing on a target based on the firing arc.
 
         Parameters:
-            - target_bearing: the target bearing in degrees. Any input larger than 180 is appropriately converted.
+            - target_bearing: the target bearing in degrees. Any input larger than 180 is converted to the 0-180 range.
 
         Returns: an integer representing the number of guns that can fire at a target at the input bearing.
         """
+
         turrets_bearing = self.calculate_turrets_bearing(turret_arc)
         return turrets_bearing * self.primary_mount
 
@@ -330,7 +408,7 @@ class Ship:
             simulates time increments. Change to 3 if you want to test whether the function returns values consistent
             with the ones in the Naval War College's fire effect tables.
 
-        Returns: a float indicating the expected base number of hits.
+        Returns: the expected base number of hits (float).
         """
 
         turrets_bearing = self.calculate_turret_arc(target_bearing)
@@ -343,6 +421,23 @@ class Ship:
 
     def target(self, firing_side, firing_group, target_group, target_ships, fire, target_range, target_bearing, evasive,
                target_deflection):
+        """Add a target to the ship's target_list DataFrame. Additionally, register the firing ship in the target's
+        'taking_fire_from' DataFrame. Eventually this will be done automatically from a battle's fire events CSV files.
+
+        Parameters:
+            - firing_side (string): either "side_a" or "side_b". The method will look for the firing group in the
+              corresponding side's group dictionary.
+            - firing_group (string): the name of the firing group.
+            - target_group (string): the name of the group being targeted.
+            - target_ships (list): the names of the ships being targeted. A single target will be a list of length one.
+            - fire (boolean): whether the target is being fired at (True) or just tracked (False).
+            - target_range (int): the range to the target in thousands of yards.
+            - target_bearing (int): the target bearing in degrees.
+            - evasive (boolean): whether the target is doing evasive maneuvers, defined as turning to both sides within
+              the duration of one move (three minutes).
+            - target_deflection (int): the shot deflection in degrees, used to determine whether the shots would be
+              penetrating.
+        """
         target_list = []
         if firing_side == "side_a":
             for ship in target_ships:
@@ -358,7 +453,16 @@ class Ship:
             self.target_data.loc[ship.name] = (firing_group, target_group, ship.name, fire, 0, turret_arc,
                                                target_range, evasive, target_deflection, penetration)
 
-    def allocate_turrets(self):
+    def allocate_primary_turrets(self):
+        """Distribute the available primary turrets among the targets in the ship's target_data. The criteria followed:
+
+        * If the bow or stern arcs are engaged, these take one turret away from the broadside arc.
+        * In a first pass, the turrets are distributed uniformly among the targets using integer division. For example,
+        distributing 7 turrets among 5 targets, the method will allocate 7 // 5 = 1 turret per target, with a remainder
+        of two. Note how, should there be more targets than turrets, this first pass will assign 0 turrets per target.
+        * Any turrets remaining are allocated one by one to the targets in the order they were targeted, until no more
+        turrets are left.
+        """
         target_bearings = self.target_data['target_bearing'].tolist()
         bow_targets = stern_targets = 0
         # Check whether the bow arc is engaged.
@@ -414,9 +518,16 @@ class Ship:
 
     def return_first_correction(self, target):
         """Returns the first correction to gunfire – a ratio which reduces rate of fire. It begins at a value of 1
-        (no reduction) and diminishes in steps of one tenth depending on circumstances affecting gunnery.
+        (no reduction) and diminishes in steps of one tenth depending on circumstances affecting gunnery. The factors
+        taken into account are:
 
-        :return float: the first correction as a ratio (0 to 1) applied to rate of fire.
+        * If opening fire, either because the target had not been fired at before, or because fire had been interrupted
+        for three minutes or longer, a penalty is applied ranging between two tenths (20% reduction) and unity (no fire
+        possible) depending on the range to the target.
+        * If fire is shifted to a target in close formation with the previous one (and if the above rule does not apply)
+        rate of fire is reduced by a flat three tenths.
+
+        Returns: the first correction as a ratio (0 to 1) applied to rate of fire.
         """
 
         # The first correction starts at 1.
@@ -452,8 +563,6 @@ class Ship:
                     first_correction -= 0.4
                 elif target_range >= 6:
                     first_correction -= 0.2
-
-            # PENDING: implement firing at a different target in the same formation.
 
         # F-18: Check whether fire has been obscured for less than one move, and if so reduce firepower proportionally.
         # This rule is not implemented directly. If anything has interfered with rate of fire for less than three
@@ -550,7 +659,7 @@ print(range_rate)
 
 # Print target data
 print(emden.return_first_correction("Brisbane"))
-emden.allocate_turrets()
+emden.allocate_primary_turrets()
 
 with pd.option_context('display.max_rows', 5, 'display.max_columns', None, 'display.width', None):
     print(emden.previous_target_data)
