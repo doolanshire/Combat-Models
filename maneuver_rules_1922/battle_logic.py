@@ -261,7 +261,7 @@ class Ship:
     def __init__(self, name, hull_class, size, life, side, deck, primary_fire_effect_table, primary_total,
                  primary_broadside, primary_bow, primary_stern, primary_mount, primary_end_arc,
                  secondary_fire_effect_table, secondary_total, secondary_broadside, secondary_bow, secondary_stern,
-                 secondary_mount, secondary_end_arc, torpedoes_type, torpedoes_mount, torpedoes_total, torpedoes_size):
+                 secondary_mount, secondary_end_arc, torpedoes_type, torpedoes_mount, torpedoes_total, torpedoes_side):
         """Parameters:
 
             *General*
@@ -351,7 +351,7 @@ class Ship:
         self.torpedoes_type = torpedoes_type
         self.torpedoes_mount = torpedoes_mount
         self.torpedoes_total = torpedoes_total
-        self.torpedoes_size = torpedoes_size
+        self.torpedoes_side = torpedoes_side
 
         # Own motion data
         self.initial_speed = self.current_speed = None
