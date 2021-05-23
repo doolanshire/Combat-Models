@@ -256,40 +256,63 @@ class Gun:
 class Ship:
     """A naval ship. All the data needed to instantiate a new Ship object can be found in the corresponding fleet list
     data files.
-
-    Attributes:
-        *General*
-        - name (string): the name of the ship.
-        - hull class (string): BB, CC, CA, CL, DD, etc. For a list of possible values check the file "life_coefficients"
-        in the helper_functions directory.
-        - size (string): large, intermediate, small, destroyer or submarine.
-        - side (float): the side (belt) armor amidships, in inches.
-        - deck (float): the deck armor amidships, in inches.
-
-        *Primary armament*
-        - primary_fire_effect_table (string): the fire effect table used by the primary armament (e.g. "6-in-50").
-        - primary_total (int): the number of turrets in the main battery.
-        - primary_broadside (int): the number of turrets the ship can fire broadside-on.
-        - primary_bow (int): the number of turrets the ship can fire at a target ahead.
-        - primary_stern (int): the number of turrets the ship can fire at a target astern.
-        - primary_mount (int): the number of guns per turret in the ship's primary armament.
-        - primary_end_arc (int): the number of degrees from the bow or stern before the firing arc is considered to be
-        broadside-on.
-
-        *Secondary armament*
-        As above, except with secondary_ as a prefix.
-
-        *Torpedoes*
-        - torpedoes_type (string): the type and caliber of the torpedoes carried by the ship, if any.
-        - torpedoes_mount (string): whether the torpedo tubes are submerged (S) or deck-mounted (D).
-        - torpedoes_total (int): total number of torpedo tubes.
-        - torpedoes_side (int): number of torpedo tubes which can fire on either side.
-        """
+    """
 
     def __init__(self, name, hull_class, size, life, side, deck, primary_fire_effect_table, primary_total,
                  primary_broadside, primary_bow, primary_stern, primary_mount, primary_end_arc,
                  secondary_fire_effect_table, secondary_total, secondary_broadside, secondary_bow, secondary_stern,
                  secondary_mount, secondary_end_arc, torpedoes_type, torpedoes_mount, torpedoes_total, torpedoes_size):
+        """Parameters:
+
+            *General*
+            - name (string): the name of the ship.
+            - hull class (string): BB, CC, CA, CL, DD, etc. For a list of all possible values check the file
+              'life_coefficients' in the 'helper_functions/' directory.
+            - size (string): large, intermediate, small, destroyer or submarine.
+            - side (float): the side (belt) armor amidships, in inches.
+            - deck (float): the deck armor amidships, in inches.
+
+            *Primary armament*
+            - primary_fire_effect_table (string): the fire effect table used by the primary armament (e.g. "6-in-50").
+            - primary_total (int): the number of turrets in the main battery.
+            - primary_broadside (int): the number of turrets the ship can fire broadside-on.
+            - primary_bow (int): the number of turrets the ship can fire at a target ahead.
+            - primary_stern (int): the number of turrets the ship can fire at a target astern.
+            - primary_mount (int): the number of guns per turret in the ship's primary armament.
+            - primary_end_arc (int): the number of degrees from the bow or stern before the firing arc is considered to
+            be broadside-on.
+
+            *Secondary armament*
+            As above, except with secondary_ as a prefix.
+
+            *Torpedoes*
+            - torpedoes_type (string): the type and caliber of the torpedoes carried by the ship, if any.
+            - torpedoes_mount (string): whether the torpedo tubes are submerged (S) or deck-mounted (D).
+            - torpedoes_total (int): total number of torpedo tubes.
+            - torpedoes_side (int): number of torpedo tubes which can fire on either side.
+
+        Attributes:
+            *Life*
+            - hit_points (float): starts with the same value as the 'life' parameter and gets reduced by damage.
+            - starting_hit_points (float): starts with the same value as the 'hit_points' attribute above, but
+              represents the ship's hit points at the start of a three-minute move. At the end of the move, and after
+              all gunnery damage has been subtracted from the 'hit_points' attribute, 'starting_hit_points' is updated
+              with the value of the attribute 'hit_points'.
+            - status (fraction): the total fraction remaining of the ship's life. Defined as the ship's hit points
+              divided by its original life value. It affects gunnery, and is updated at the end of every move.
+
+            *Motion*
+            - initial_speed / current_speed (float): the speed in knots at the end of the last move, and at the start
+              of the current move. Used to track ship acceleration and deceleration as it affects gunnery.
+            - initial_course / current_course (int): the ship's course at the end of the last move, and at the start of
+              the current move. Used to track changes of course (of firing and target ships) which may affect gunnery.
+
+            *Targeting*
+            - previous_target_data / target_data (DataFrames): tables containing the relevant data of all of the ship's
+              targets, used to calculate fire corrections. Upon initialisation these DataFrames are empty, and they are
+              populated through the Ship.target() method.
+        """
+
         # General data
         self.name = name
         self.hull_class = hull_class
@@ -521,6 +544,7 @@ class Ship:
         (no reduction) and diminishes in steps of one tenth depending on circumstances affecting gunnery. The factors
         taken into account are:
 
+        * Ship status: a ship that has suffered damage will have its rate of fire reduced by the same proportion.
         * If opening fire, either because the target had not been fired at before, or because fire had been interrupted
         for three minutes or longer, a penalty is applied ranging between two tenths (20% reduction) and unity (no fire
         possible) depending on the range to the target.
