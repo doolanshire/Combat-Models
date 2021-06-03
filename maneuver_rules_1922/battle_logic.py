@@ -253,6 +253,50 @@ class Gun:
                 return False
 
 
+class Battery:
+    """A battery of guns of the same caliber. Batteries are defined by their gun designation and caliber, the type of
+    battery (primary, secondary or tertiary), the total number of mounts on the ship and their type (turret, casemate),
+    the number of guns per mount, whether the battery has a low freeboard, and the number of mounts bearing on each arc
+    (bow, broadside or stern) as well as the angle from the bow and stern defining those arcs.
+    """
+
+    def __init__(self, gun_type, battery_type, mount_type, total_mounts, bow_mounts, broadside_mounts, stern_mounts,
+                 end_arc, guns_per_mount, low_freeboard=False):
+        """All parameters are loaded automatically from external files (in particular from the fleet lists).
+
+        Parameters:
+            - gun_type (Gun object): a Gun object of the type used in the battery.
+            - battery_type (string): "primary", "secondary" or "tertiary". Fire events decide which guns are firing
+              according to these categories. Note that ships having guns of the same caliber in different mount types
+              (for example the 1906 Scharnhorst class, with four 8.3-inch guns in two centerline turrets and another
+              four in broadside casemates) can have more than one battery of the same type (in this case, two different
+              primary batteries in different mounts).
+            - mount_type (string): "turret" or "casemate". May affect rate of fire in some versions of the rules.
+            - total_mounts (int): the total number of mounts present in the battery.
+            - bow_mounts (int): the number of mounts bearing on the bow arc.
+            - broadside_mounts (int): the number of mounts bearing on the broadside arc.
+            - stern_mounts (int): the number of mounts bearing on the stern arc.
+            - end_arc (int): the angle (in degrees) from the bow or stern at which the firing arc changes.
+            - guns_per_mount (int): the number of guns per mount.
+            - low_freeboard (bool): whether the guns are considered to be mounted low and close to the waterline. Guns
+              thus mounted cannot fire in rough seas. Defaults to 'False'.
+
+        Attributes:
+            - caliber (float): the battery's caliber, extracted from the gun type.
+        """
+        self.gun_type = gun_type
+        self.caliber = gun_type.caliber
+        self.battery_type = battery_type
+        self.mount_type = mount_type
+        self.total_mounts = total_mounts
+        self.bow_mounts = bow_mounts
+        self.broadside_mounts = broadside_mounts
+        self.stern_mounts = stern_mounts
+        self.end_arc = end_arc
+        self.guns_per_mount = guns_per_mount
+        self.low_freeboard = low_freeboard
+
+
 class Ship:
     """A naval ship. All the data needed to instantiate a new Ship object can be found in the corresponding fleet list
     data files.
@@ -651,6 +695,9 @@ emden.initial_speed = dresden.initial_speed = 10
 emden.current_speed = dresden.current_speed = 15
 emden.initial_course = dresden.initial_course = 80
 emden.current_course = dresden.current_course = 90
+
+# Test ship dictionary
+ship_dictionary = {"Sydney": sydney, "Melbourne": melbourne, "Brisbane": brisbane, "Emden": emden, "Dresden": dresden}
 
 # Test group ship dictionaries
 side_a_group_ships = {"Sydney": sydney, "Brisbane": brisbane, "Melbourne": melbourne}
