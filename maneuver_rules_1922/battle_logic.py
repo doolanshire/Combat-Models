@@ -385,13 +385,13 @@ class Battery:
         # Iterate over the dataframe allocating the remaining turrets.
         for i, row in self.target_data.iterrows():
             if row['firing_arc'] == "bow" and remaining_bow_mounts > 0:
-                self.target_data.at[i, 'allocated_turrets'] += 1
+                self.target_data.at[i, 'allocated_mounts'] += 1
                 remaining_bow_mounts -= 1
             if row['firing_arc'] == "stern" and remaining_stern_mounts > 0:
-                self.target_data.at[i, 'allocated_turrets'] += 1
+                self.target_data.at[i, 'allocated_mounts'] += 1
                 remaining_stern_mounts -= 1
             if row['firing_arc'] == "broadside" and remaining_broadside_mounts > 0:
-                self.target_data.at[i, 'allocated_turrets'] += 1
+                self.target_data.at[i, 'allocated_mounts'] += 1
                 remaining_broadside_mounts -= 1
 
 
@@ -674,8 +674,9 @@ side_b_groups = {"Emden and Dresden": Group("Emden and Dresden", side_b_group_sh
 side_a = Side("Australia", side_a_groups)
 side_b = Side("Germany", side_b_groups)
 
-emden.target(ships, "Emden and Dresden", "Brisbane, Sydney and Melbourne", ["Brisbane"], True, "primary", 10, 90, False,
-             45)
+emden.target(ships, "Emden and Dresden", "Brisbane, Sydney and Melbourne", ["Brisbane", "Sydney"], True, "primary", 10,
+             90, False, 45)
+
 
 for battery in emden.primary_batteries:
     battery.allocate_mounts()
