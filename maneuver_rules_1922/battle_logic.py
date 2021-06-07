@@ -282,7 +282,10 @@ class Battery:
 
         Attributes:
             - caliber (float): the gun_battery's caliber, extracted from the gun type.
+            - target_data (DataFrame): a Pandas DataFrame containing data on all the targets the battery is firing
+            at. Ultimately all battle damage calculations are done using data from this DataFrame.
         """
+
         self.gun_type = gun_type
         self.caliber = gun_type.caliber
         self.battery_type = battery_type
@@ -301,6 +304,15 @@ class Battery:
                                                  "second__correction"])
 
     def calculate_firing_arc(self, target_bearing):
+        """Calculate the firing arc of the battery from the target bearing.
+
+        Parameters:
+            - target_bearing (int): the target bearing in degrees.
+
+        Returns:
+            - A string ("bow", "broadside" or "stern") describing the firing arc the target lies on.
+        """
+
         if target_bearing > 180:
             target_bearing = 180 - (target_bearing % 180)
         if target_bearing < self.end_arc:
@@ -311,6 +323,14 @@ class Battery:
             return "broadside"
 
     def calculate_mounts_bearing(self, firing_arc):
+        """Returns how many mounts are bearing on a given firing arc.
+
+        Parameters:
+            - firing_arc (string): "bow", "broadside" or "stern".
+
+        Returns:
+            - The number of mounts bearing on that arc (int).
+        """
         if firing_arc == "bow":
             return self.bow_mounts
         elif firing_arc == "stern":
@@ -319,10 +339,30 @@ class Battery:
             return self.broadside_mounts
 
     def calculate_salvo_size(self, firing_arc):
+        """Calculate the number of guns firing on a given arc. This is the number of mounts bearing multiplied by the
+        number of guns per mount.
+
+        Parameters:
+            - firing_arc (string): "bow", "broadside" or "stern".
+
+        Returns:
+            - The number of guns bearing on the specified firing arc (int).
+            """
         mounts_bearing = self.calculate_mounts_bearing(firing_arc)
         return mounts_bearing * self.guns_per_mount
 
     def target(self, ship_dictionary, target_name, target_range, target_bearing, shell_incidence_angle):
+        """Enter information about a given target into the battery's target_data DataFrame.
+
+        Parameters:
+            - ship_dictionary (dict): a dictionary of all the ships participating in the battle. Keys are ship names,
+              beginning with a capital letter, and without country / service prefix.
+            - target_name (str): the name of the target ship, to look up into the dictionary above.
+            - target_range (int): the range to the target in thousands of yards.
+            - target_bearing (int): the target's bearing in degrees measured from the bow of the firing ship.
+            - shell_incidence_angle (int) the angle of incidence of the firing line on the target's course (int).
+        """
+
         # Calculate deck and side penetration.
         target_side_armor = ship_dictionary[target_name].side
         target_deck_armor = ship_dictionary[target_name].deck
@@ -331,6 +371,9 @@ class Battery:
 
         # Calculate the firing arc.
         firing_arc = self.calculate_firing_arc(target_bearing)
+
+        # Add a target entry to the target_data DataFrame with all the information above. The missing columns are set to
+        # zero at this stage, and filled in later by other methods as the information becomes available.
         self.target_data.loc[target_name] = (target_name, firing_arc, target_range, side_penetration,
                                              deck_penetration, 0, 0, 0)
 
@@ -344,11 +387,12 @@ class Battery:
         * Any mounts remaining are allocated one by one to the targets in the order they were targeted, until no more
         turrets are left.
         """
+
         firing_arcs = self.target_data['firing_arc'].tolist()
         bow_targets = stern_targets = 0
-        # Check whether the bow arc is engaged.
         remaining_bow_mounts = remaining_stern_mounts = remaining_broadside_mounts = 0
 
+        # Check whether the bow arc is engaged.
         if "bow" in firing_arcs:
             bow_mounts = self.bow_mounts
             bow_targets = self.target_data["firing_arc"].value_counts()['bow']
@@ -361,14 +405,14 @@ class Battery:
         if "stern" in firing_arcs:
             stern_mounts = self.stern_mounts
             stern_targets = self.target_data["firing_arc"].value_counts()["stern"]
-            # Allocate turrets to all targets in a stern arc.
+            # Allocate mounts to all targets in a stern arc.
             stern_mounts_per_target = stern_mounts // stern_targets
             remaining_stern_mounts = stern_mounts % stern_targets
             self.target_data.loc[(self.target_data["firing_arc"] == "stern"),
                                  "allocated_turrets"] = stern_mounts_per_target
 
-        # Check whether the broadside is engaged. Remove one turret from it if either bow or stern are engaged, two
-        # if both are engaged.
+        # Check whether the broadside is engaged. Remove one mount from the broadside if either the bow or the stern are
+        # engaged as well, two if both are engaged.
         if "broadside" in firing_arcs:
             broadside_mounts = self.broadside_mounts
             if bow_targets > 0:
@@ -376,13 +420,13 @@ class Battery:
             if stern_targets > 0:
                 broadside_mounts -= 1
             broadside_targets = self.target_data["firing_arc"].value_counts()["broadside"]
-            # Allocate turrets to all targets in a broadside arc.
+            # Allocate mounts to all targets in a broadside arc.
             broadside_mounts_per_target = broadside_mounts // broadside_targets
             remaining_broadside_mounts = broadside_mounts % broadside_targets
             self.target_data.loc[(self.target_data["firing_arc"] == "broadside"),
                                  "allocated_mounts"] = broadside_mounts_per_target
 
-        # Iterate over the dataframe allocating the remaining turrets.
+        # Iterate over the dataframe allocating the remaining mounts.
         for i, row in self.target_data.iterrows():
             if row['firing_arc'] == "bow" and remaining_bow_mounts > 0:
                 self.target_data.at[i, 'allocated_mounts'] += 1
@@ -486,6 +530,15 @@ class Ship:
         self.incoming_fire = pd.DataFrame(columns=["ship_name", "guns_firing", "caliber", "range"])
 
     def add_gun_battery(self, gun_battery):
+        """Add a gun battery to the ship. The simulation's parser functions first create the gun batteries from the ship
+        armament information contained in the fleet lists, and then use this method to assign the batteries to the three
+        different categories (primary, secondary, tertiary).
+
+        Parameters:
+            - gun_battery (Battery): a Battery object to assign the ship. Depending on the Battery.battery_type
+              attribute the battery is appended to one of the three categories.
+        """
+
         if gun_battery.battery_type == "primary":
             self.primary_batteries.append(gun_battery)
         elif gun_battery.battery_type == "secondary":
@@ -494,6 +547,13 @@ class Ship:
             self.tertiary_batteries.append(gun_battery)
 
     def add_torpedoes(self, torpedoes):
+        """Add torpedo armament to the ship. The simulation's parser functions first create the torpedo armament from
+        the relevant columns in the fleet lists, and then use this method to append it to the Ship.torpedoes list.
+
+        Parameters:
+            - torpedoes (Torpedoes): a Torpedoes object to add to the ship's torpedo armament list.
+        """
+
         self.torpedoes.append(torpedoes)
 
     def target(self, ship_dictionary, firing_group, target_group, target_ships, fire, armament_types, target_range,
@@ -674,13 +734,28 @@ side_b_groups = {"Emden and Dresden": Group("Emden and Dresden", side_b_group_sh
 side_a = Side("Australia", side_a_groups)
 side_b = Side("Germany", side_b_groups)
 
-emden.target(ships, "Emden and Dresden", "Brisbane, Sydney and Melbourne", ["Brisbane", "Sydney"], True, "primary", 10,
+# Fill Emden's target data, firing at Sydney.
+emden.target(ships, "Emden and Dresden", "Brisbane, Sydney and Melbourne", ["Sydney"], True, "primary", 10,
+             90, False, 45)
+# Simulate fire in a previous move by copying current target data to the previous target data DataFrame.
+emden.previous_target_data = emden.target_data.copy()
+
+# Additionally, fire at Brisbane in the current move.
+emden.target(ships, "Emden and Dresden", "Brisbane, Sydney and Melbourne", ["Brisbane"], True, "primary", 10,
              90, False, 45)
 
+# Calculate the first correction to test that range has been established correctly. Should be 1.0 for Sydney (having
+# fired at it before) and 0.7 for Brisbane (shifting fire to another ship of a previously targeted group).
+print("First correction for Sydney:")
+print(emden.return_first_correction("Sydney"))
+print("First correction for Brisbane:")
+print(emden.return_first_correction("Brisbane"))
 
+# Allocate mounts from primary batteries.
 for battery in emden.primary_batteries:
     battery.allocate_mounts()
 
+# Print the targeting dataframes for both Emden and its two primary batteries.
 with pd.option_context('display.max_rows', 5, 'display.max_columns', None, 'display.width', None):
     print("Previous target data")
     print(emden.previous_target_data)
