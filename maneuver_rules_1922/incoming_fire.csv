@@ -1,0 +1,8 @@
+"hull_class","minimum_primary_guns","maximum_primary_guns","minimum_caliber","maximum_caliber","minimum_secondary_guns","minimum_secondary_caliber","maximum_secondary_caliber"
+"OBB","4","6","9.4","12","4","4","7.5"
+"BB","8","10","12","16","4","3","6"
+"OCC","8","10","12","16","4","3","6"
+"OCA","4","8","7.5","9.4","2","6","7.5"
+"OCL","4","8","3","6","3","3","3"
+"CL","4","8","3","6","3","3","3"
+"ODD","2","4","3","4","NA","NA","NA"

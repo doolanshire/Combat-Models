@@ -449,7 +449,7 @@ class Ship:
 
             *General*
             - name (string): the name of the ship.
-            - hull class (string): BB, CC, CA, CL, DD, etc. For a list of all possible values check the file
+            - hull class (string): BB, OBB, OCC, OCA, C, ODD, etc. For a list of all possible values check the file
               'life_coefficients' in the 'helper_functions/' directory.
             - size (string): large, intermediate, small, destroyer or submarine.
             - side (float): the side (belt) armor amidships, in inches.
