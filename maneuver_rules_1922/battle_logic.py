@@ -373,9 +373,10 @@ class Battery:
         firing_arc = self.calculate_firing_arc(target_bearing)
 
         # Add a target entry to the target_data DataFrame with all the information above. The missing columns are set to
-        # zero at this stage, and filled in later by other methods as the information becomes available.
+        # zero (mounts) and one (corrections) at this stage, and filled in later by other methods as the information
+        # becomes available.
         self.target_data.loc[target_name] = (target_name, firing_arc, target_range, side_penetration,
-                                             deck_penetration, 0, 0, 0)
+                                             deck_penetration, 0, 1, 1)
 
     def allocate_mounts(self):
         """Distribute the available gun mounts among the targets in the battery's target_data. The criteria followed:
@@ -527,7 +528,7 @@ class Ship:
                                                  "target_range", "target_bearing", "evasive", "shell_incidence_angle"])
 
         # Incoming fire data
-        self.incoming_fire_ship_data = pd.DataFrame(columns=["ship_name", "group_name", "range"])
+        self.incoming_fire_ship_data = pd.DataFrame(columns=["ship_name", "group_name", "armament_types", "range"])
         self.incoming_fire_gun_data = pd.DataFrame(columns=["caliber", "guns"])
         self.hits_taken = {}
 
@@ -585,6 +586,10 @@ class Ship:
             self.target_data.loc[ship.name] = (firing_group, target_group, ship.name, fire, armament_types,
                                                target_range, target_bearing, evasive, shell_incidence_angle)
 
+            # If firing, add the targeting data to the target ship's incoming_fire_ship_data DataFrame.
+            if fire:
+                ship.incoming_fire_ship_data.loc[self.name] = self.name, firing_group, armament_types, target_range
+
         # PASS THE TARGETING DATA TO THE BATTERIES.
 
         # Make a list of the armament types used against the target.
@@ -599,7 +604,37 @@ class Ship:
                         gun_battery.target(ship_dictionary, ship.name, target_range, target_bearing,
                                            shell_incidence_angle)
 
-    def return_first_correction(self, target):
+    def return_ranging_correction(self, target):
+        """Return the ranging correction (reduction) applied to rate of fire if range has not been established or fire
+        has been shifted (rules F-15 to F17)
+        """
+        if (target not in self.previous_target_data.index or
+                (target in self.previous_target_data.index and not self.previous_target_data["fire"][target])):
+            target_group = self.target_data["target_group"][target]
+            if ((self.previous_target_data['target_group'] == target_group) &
+               self.previous_target_data['fire']).any():
+                print("Fire shifted!")
+                return -0.3
+
+            else:
+                print("Opening fire!")
+                # Keep track of whether fire is being opened, as it affects other rules.
+                # opening_fire = True
+                target_range = self.target_data["target_range"][target]
+                if target_range > 25:
+                    return -1
+                elif target_range >= 21:
+                    return -0.8
+                elif target_range >= 16:
+                    return -0.6
+                elif target_range >= 11:
+                    return -0.4
+                elif target_range >= 6:
+                    return -0.2
+        else:
+            return 0
+
+    def apply_first_correction(self):
         """Returns the first correction to gunfire – a ratio which reduces rate of fire. It begins at a value of 1
         (no reduction) and diminishes in steps of one tenth depending on circumstances affecting gunnery. The factors
         taken into account are:
@@ -614,46 +649,11 @@ class Ship:
         Returns: the first correction as a ratio (0 to 1) applied to rate of fire.
         """
 
-        # The first correction starts at 1.
-        first_correction = 1
-
-        # F-49: Modify rate of fire by ship status.
-        # status_lost = round(1 - math.ceil(self.status * 10) / 10, 1)
-        # first_correction -= status_lost
-        first_correction *= self.status
-
-        # F-15: Check whether range has to be established.
-        # First check whether the target has been fired at before for one full move.
-        if (target not in self.previous_target_data.index or
-                (target in self.previous_target_data.index and not self.previous_target_data["fire"][target])):
-            target_group = self.target_data["target_group"][target]
-            if ((self.previous_target_data['target_group'] == target_group) &
-               self.previous_target_data['fire']).any():
-                print("Fire shifted!")
-                first_correction -= 0.3
-
-            else:
-                print("Opening fire!")
-                # Keep track of whether fire is being opened, as it affects other rules.
-                # opening_fire = True
-                target_range = self.target_data["target_range"][target]
-                if target_range > 25:
-                    first_correction -= 1
-                elif target_range >= 21:
-                    first_correction -= 0.8
-                elif target_range >= 16:
-                    first_correction -= 0.6
-                elif target_range >= 11:
-                    first_correction -= 0.4
-                elif target_range >= 6:
-                    first_correction -= 0.2
-
-        # F-18: Check whether fire has been obscured for less than one move, and if so reduce firepower proportionally.
-        # This rule is not implemented directly. If anything has interfered with rate of fire for less than three
-        # minutes during a given move, it should be specified in the "first correction modifier" for the event in the
-        # fire events files.
-
-        return round(first_correction, 2)
+        for gun_battery in self.primary_batteries:
+            for i, row in gun_battery.target_data.iterrows():
+                target_name = row['target_name']
+                first_correction = self.status * self.return_ranging_correction(target_name)
+                gun_battery.target_data.at[i, 'first_correction'] += first_correction
 
 
 class Group:
@@ -746,13 +746,6 @@ emden.previous_target_data = emden.target_data.copy()
 emden.target(ships, "Emden and Dresden", "Brisbane, Sydney and Melbourne", ["Brisbane"], True, "primary", 10,
              90, False, 45)
 
-# Calculate the first correction to test that range has been established correctly. Should be 1.0 for Sydney (having
-# fired at it before) and 0.7 for Brisbane (shifting fire to another ship of a previously targeted group).
-print("First correction for Sydney:")
-print(emden.return_first_correction("Sydney"))
-print("First correction for Brisbane:")
-print(emden.return_first_correction("Brisbane"))
-
 # Allocate mounts from primary batteries.
 for battery in emden.primary_batteries:
     battery.allocate_mounts()
@@ -765,6 +758,13 @@ with pd.option_context('display.max_rows', 5, 'display.max_columns', None, 'disp
     print("Current target data")
     print(emden.target_data)
     print("")
+    print("Brisbane incoming fire data")
+    print(brisbane.incoming_fire_ship_data)
+    print("")
+
+    # Apply the first correction to Emden's targets
+    emden.apply_first_correction()
+
     for battery in emden.primary_batteries:
         print("Gun battery target data")
         print(battery.caliber)
