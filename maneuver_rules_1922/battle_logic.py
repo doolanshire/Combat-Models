@@ -527,7 +527,9 @@ class Ship:
                                                  "target_range", "target_bearing", "evasive", "shell_incidence_angle"])
 
         # Incoming fire data
-        self.incoming_fire = pd.DataFrame(columns=["ship_name", "guns_firing", "caliber", "range"])
+        self.incoming_fire_ship_data = pd.DataFrame(columns=["ship_name", "group_name", "range"])
+        self.incoming_fire_gun_data = pd.DataFrame(columns=["caliber", "guns"])
+        self.hits_taken = {}
 
     def add_gun_battery(self, gun_battery):
         """Add a gun battery to the ship. The simulation's parser functions first create the gun batteries from the ship
