@@ -1120,4 +1120,5 @@ def load_battle(battle_id_string):
 
 cocos = load_battle("cocos")
 cocos.resolve()
+print(cocos.side_a.groups["Sydney"].members[0].hits_received)
 cocos.firepower_comparison(["Sydney"], ["Emden"])
