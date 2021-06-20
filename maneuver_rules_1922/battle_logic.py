@@ -608,18 +608,21 @@ class Ship:
         """Return the ranging correction (reduction) applied to rate of fire if range has not been established or fire
         has been shifted (rules F-15 to F17)
         """
+
+        # If the target had not been fired at in the previous move.
         if (target not in self.previous_target_data.index or
                 (target in self.previous_target_data.index and not self.previous_target_data["fire"][target])):
             target_group = self.target_data["target_group"][target]
+            # Check whether a neighbouring target (in the same formation) had been fired at. If so, apply the standard
+            # -30% modifier for shifting fire to an adjacent target.
             if ((self.previous_target_data['target_group'] == target_group) &
                self.previous_target_data['fire']).any():
                 print("Fire shifted!")
                 return -0.3
 
+            # Otherwise, apply the correct reduction depending on the range to the target.
             else:
                 print("Opening fire!")
-                # Keep track of whether fire is being opened, as it affects other rules.
-                # opening_fire = True
                 target_range = self.target_data["target_range"][target]
                 if target_range > 25:
                     return -1
@@ -631,6 +634,8 @@ class Ship:
                     return -0.4
                 elif target_range >= 6:
                     return -0.2
+
+        # If the target had been fired at in the previous move, do not reduce rate of fire.
         else:
             return 0
 
@@ -649,10 +654,26 @@ class Ship:
         Returns: the first correction as a ratio (0 to 1) applied to rate of fire.
         """
 
+        # Iterate over the ship's primary batteries first.
         for gun_battery in self.primary_batteries:
             for i, row in gun_battery.target_data.iterrows():
+                # Get the (string) name of each target engaged by the battery.
                 target_name = row['target_name']
+                # Work out the first correction fraction for all outgoing fire by target name.
                 first_correction = self.status * self.return_ranging_correction(target_name)
+                # Add the fraction to the existing first correction number in the battery. Note that most of the time
+                # the number added will be negative (-0.3 for a 30% decrease in rate of fire, etc).
+                gun_battery.target_data.at[i, 'first_correction'] += first_correction
+
+        # Do the same with the ship's secondary batteries, if any exist.
+        for gun_battery in self.secondary_batteries:
+            for i, row in gun_battery.target_data.iterrows():
+                # Get the (string) name of each target engaged by the battery.
+                target_name = row['target_name']
+                # Work out the first correction fraction for all outgoing fire by target name.
+                first_correction = self.status * self.return_ranging_correction(target_name)
+                # Add the fraction to the existing first correction number in the battery. Note that most of the time
+                # the number added will be negative (-0.3 for a 30% decrease in rate of fire, etc).
                 gun_battery.target_data.at[i, 'first_correction'] += first_correction
 
 
@@ -762,7 +783,7 @@ with pd.option_context('display.max_rows', 5, 'display.max_columns', None, 'disp
     print(brisbane.incoming_fire_ship_data)
     print("")
 
-    # Apply the first correction to Emden's targets
+    # Apply the first correction to all of Emden's targets, and to all ships currently targeting Emden.
     emden.apply_first_correction()
 
     for battery in emden.primary_batteries:
