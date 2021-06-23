@@ -507,9 +507,7 @@ class Ship:
         self.deck = deck
 
         # Armament data
-        self.primary_batteries = []
-        self.secondary_batteries = []
-        self.tertiary_batteries = []
+        self.batteries = {"primary": [], "secondary": [], "tertiary": []}
 
         # Torpedo tubes might be implemented in the future.
         self.torpedoes = []
@@ -542,12 +540,7 @@ class Ship:
               attribute the battery is appended to one of the three categories.
         """
 
-        if gun_battery.battery_type == "primary":
-            self.primary_batteries.append(gun_battery)
-        elif gun_battery.battery_type == "secondary":
-            self.secondary_batteries.append(gun_battery)
-        elif gun_battery.battery_type == "tertiary":
-            self.tertiary_batteries.append(gun_battery)
+        self.batteries[gun_battery.battery_type].append(gun_battery)
 
     def add_torpedoes(self, torpedoes):
         """Add torpedo armament to the ship. The simulation's parser functions first create the torpedo armament from
@@ -597,12 +590,28 @@ class Ship:
         if fire:
             armament_types = [armament_type.strip() for armament_type in armament_types.split(',')]
 
-            # Pass the target information to the batteries belonging to each armament as needed.
-            if "primary" in armament_types:
-                for gun_battery in self.primary_batteries:
-                    for ship in target_list:
-                        gun_battery.target(ship_dictionary, ship.name, target_range, target_bearing,
-                                           shell_incidence_angle)
+        # Pass the target information to the batteries belonging to each armament as needed.
+        for armament_type in armament_types:
+            for gun_battery in self.batteries[armament_type]:
+                for ship in target_list:
+                    gun_battery.target(ship_dictionary, ship.name, target_range, target_bearing,
+                                       shell_incidence_angle)
+
+    def apply_correction(self, correction, target, armament_type, tenths):
+        """Apply a correction to the rate of fire (first correction) or accuracy (second correction) of the ship's
+        batteries. The method has a check to ensure that neither rate of fire nor accuracy corrections become negative.
+        Corrections larger than one (rate of fire or accuracy higher than normal) are still possible.
+
+        Arguments:
+            - correction_type (str): 'rate_of_fire' or 'accuracy'. The former corresponds to the 'first correction' in
+            the NWC rules, and the latter to the 'second correction'.
+            - target (str): the name of the target, to look up in the ship dictionary.
+            - armament_type (str): 'primary' or 'secondary'. Decides which batteries will see the correction applied.
+            - tenths (float): a fraction indicating how many tenths the firing correction should be modified by. This
+            number is negative for reductions and positive for increases; so, -0.3 would indicate a decrease of three
+            tenths."""
+
+        pass
 
     def return_ranging_correction(self, target):
         """Return the ranging correction (reduction) applied to rate of fire if range has not been established or fire
@@ -654,27 +663,17 @@ class Ship:
         Returns: the first correction as a ratio (0 to 1) applied to rate of fire.
         """
 
-        # Iterate over the ship's primary batteries first.
-        for gun_battery in self.primary_batteries:
-            for i, row in gun_battery.target_data.iterrows():
-                # Get the (string) name of each target engaged by the battery.
-                target_name = row['target_name']
-                # Work out the first correction fraction for all outgoing fire by target name.
-                first_correction = self.status * self.return_ranging_correction(target_name)
-                # Add the fraction to the existing first correction number in the battery. Note that most of the time
-                # the number added will be negative (-0.3 for a 30% decrease in rate of fire, etc).
-                gun_battery.target_data.at[i, 'first_correction'] += first_correction
-
-        # Do the same with the ship's secondary batteries, if any exist.
-        for gun_battery in self.secondary_batteries:
-            for i, row in gun_battery.target_data.iterrows():
-                # Get the (string) name of each target engaged by the battery.
-                target_name = row['target_name']
-                # Work out the first correction fraction for all outgoing fire by target name.
-                first_correction = self.status * self.return_ranging_correction(target_name)
-                # Add the fraction to the existing first correction number in the battery. Note that most of the time
-                # the number added will be negative (-0.3 for a 30% decrease in rate of fire, etc).
-                gun_battery.target_data.at[i, 'first_correction'] += first_correction
+        # Iterate over the ship's batteries.
+        for armament_type, armament in self.batteries.items():
+            for gun_battery in armament:
+                for i, row in gun_battery.target_data.iterrows():
+                    # Get the (string) name of each target engaged by the battery.
+                    target_name = row['target_name']
+                    # Work out the first correction fraction for all outgoing fire by target name.
+                    first_correction = self.status * self.return_ranging_correction(target_name)
+                    # Add the fraction to the existing first correction number in the battery. Note that most of the
+                    # time the number added will be negative (-0.3 for a 30% decrease in rate of fire, etc).
+                    gun_battery.target_data.at[i, 'first_correction'] += first_correction
 
 
 class Group:
@@ -768,7 +767,7 @@ emden.target(ships, "Emden and Dresden", "Brisbane, Sydney and Melbourne", ["Bri
              90, False, 45)
 
 # Allocate mounts from primary batteries.
-for battery in emden.primary_batteries:
+for battery in emden.batteries["primary"]:
     battery.allocate_mounts()
 
 # Print the targeting dataframes for both Emden and its two primary batteries.
@@ -786,7 +785,7 @@ with pd.option_context('display.max_rows', 5, 'display.max_columns', None, 'disp
     # Apply the first correction to all of Emden's targets, and to all ships currently targeting Emden.
     emden.apply_first_correction()
 
-    for battery in emden.primary_batteries:
+    for battery in emden.batteries["primary"]:
         print("Gun battery target data")
         print(battery.caliber)
         print(battery.target_data)
