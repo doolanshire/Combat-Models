@@ -664,6 +664,38 @@ class Ship:
         else:
             return 0
 
+    def apply_concentration_correction(self, ship_dictionary):
+        """Apply the correction to rate of fife for non-adjacent concentration to the batteries of ships targeting
+        (self), if applicable (rule F-23 (a)). Note that this method does not affect the rate of fire of (self), but of
+        enemy ships targeting (self). As written in the 1922 rules, the penalty (of two tenths) applies to 'non-
+        adjacent ships in the same formation' firing on the same target. In this implementation the rule applies to
+        ships belonging to the same group if the group is not considered a close formation (Group.formation == False).
+
+        Arguments:
+            - ship_dictionary (dict): the battle's ship dictionary, to look up all firing ships by their name.
+
+        The method is a procedure that does not return any values, but instead applies the correction directly to the
+        firing ships' relevant batteries.
+        """
+
+        # Examine (self)'s incoming_fire_ship_data DataFrame and count the number of ships in each unique group.
+        group_member_counts = self.incoming_fire_ship_data.group_name.value_counts()
+
+        # Filter out lone ships, keeping only the ones in groups of two or more.
+        not_in_formation = self.incoming_fire_ship_data[self.incoming_fire_ship_data.group_name.isin(
+                                                        group_member_counts.index[group_member_counts.ge(2)])]
+        # Filter out ships in close formation.
+        not_in_formation = not_in_formation[not_in_formation["formation"].eq(False)]
+
+        # Apply the penalty to all ships in the resulting list.
+        # Iterate over the non-adjacent ship DataFrame.
+        for i, row in not_in_formation.iterrows():
+            # Determine armament types (primary, secondary, tertiary or any combination thereof).
+            armament_types = [armament_type.strip() for armament_type in row['armament_types'].split(',')]
+            # Apply the correction to the batteries of the relevant armament types.
+            for armament_type in armament_types:
+                ship_dictionary[row['ship_name']].apply_correction("first_correction", self.name, armament_type, -0.2)
+
     def apply_first_correction(self):
         """Returns the first correction to gunfire – a ratio which reduces rate of fire. It begins at a value of 1
         (no reduction) and diminishes in steps of one tenth depending on circumstances affecting gunnery. The factors
@@ -764,25 +796,38 @@ side_a_group_ships = {"Sydney": sydney, "Brisbane": brisbane, "Melbourne": melbo
 side_b_group_ships = {"Emden": emden, "Dresden": dresden}
 
 # Test groups
-side_a_groups = {"Brisbane, Sydney and Melbourne": Group("Brisbane, Sydney and Melbourne", side_a_group_ships, False)}
-side_b_groups = {"Emden and Dresden": Group("Emden and Dresden", side_b_group_ships, True)}
+side_a_groups = {"Brisbane, Sydney and Melbourne": Group("Brisbane, Sydney and Melbourne", side_a_group_ships, True)}
+side_b_groups = {"Emden and Dresden": Group("Emden and Dresden", side_b_group_ships, False)}
 
 # Test sides
 side_a = Side("Australia", side_a_groups)
 side_b = Side("Germany", side_b_groups)
 
 # Fill Emden's target data, firing at Sydney.
-emden.target(ships, "Emden and Dresden", "Brisbane, Sydney and Melbourne", True, ["Sydney"], True, "primary", 10,
+emden.target(ships, "Emden and Dresden", "Brisbane, Sydney and Melbourne", False, ["Sydney"], True, "primary", 10,
              90, False, 45)
 # Simulate fire in a previous move by copying current target data to the previous target data DataFrame.
 emden.previous_target_data = emden.target_data.copy()
 
 # Additionally, fire at Brisbane in the current move.
-emden.target(ships, "Emden and Dresden", "Brisbane, Sydney and Melbourne", True, ["Brisbane"], True, "primary", 10,
+emden.target(ships, "Emden and Dresden", "Brisbane, Sydney and Melbourne", False, ["Brisbane"], True, "primary", 10,
              90, False, 45)
+
+# Fill Dresden's target data, firing at Sydney.
+dresden.target(ships, "Emden and Dresden", "Brisbane, Sydney and Melbourne", False, ["Sydney"], True, "primary", 10,
+               90, False, 45)
+# Simulate fire in a previous move by copying current target data to the previous target data DataFrame.
+dresden.previous_target_data = dresden.target_data.copy()
+
+# Additionally, fire at Brisbane in the current move.
+dresden.target(ships, "Emden and Dresden", "Brisbane, Sydney and Melbourne", False, ["Brisbane"], True, "primary", 10,
+               90, False, 45)
 
 # Allocate mounts from primary batteries.
 for battery in emden.batteries["primary"]:
+    battery.allocate_mounts()
+
+for battery in dresden.batteries["primary"]:
     battery.allocate_mounts()
 
 # Print the targeting dataframes for both Emden and its two primary batteries.
@@ -799,8 +844,21 @@ with pd.option_context('display.max_rows', 5, 'display.max_columns', None, 'disp
 
     # Apply the first correction to all of Emden's targets, and to all ships currently targeting Emden.
     emden.apply_first_correction()
+    # Apply the first correction to all of Dresden's targets, and to all ships currently targeting Emden.
+    dresden.apply_first_correction()
+    # Apply the concentration correction to ships firing at Sydney and Brisbane.
+    sydney.apply_concentration_correction(ships)
+    brisbane.apply_concentration_correction(ships)
 
+    print("Emden batteries")
     for battery in emden.batteries["primary"]:
+        print("Gun battery target data")
+        print(battery.caliber)
+        print(battery.target_data)
+        print("")
+
+    print("Dresden batteries")
+    for battery in dresden.batteries["primary"]:
         print("Gun battery target data")
         print(battery.caliber)
         print(battery.target_data)
