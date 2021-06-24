@@ -439,6 +439,23 @@ class Battery:
                 self.target_data.at[i, 'allocated_mounts'] += 1
                 remaining_broadside_mounts -= 1
 
+    def apply_correction(self, correction, target_name, tenths):
+        """Apply a correction to the rate of fire (first correction) or accuracy (second correction) of the ship's
+        batteries. The method has a check to ensure that neither rate of fire nor accuracy corrections become negative.
+        Corrections larger than one (rate of fire or accuracy higher than normal) are still possible.
+
+        Arguments:
+            - correction (str): 'first_correction' or 'second_correction'. In the NWC rules, the former applies to rate
+            of fire, and the latter to accuracy.
+            - target_name (str): the name of the target, to look up in the ship dictionary.
+            - armament_type (str): 'primary' or 'secondary'. Decides which batteries will see the correction applied.
+            - tenths (float): a fraction indicating how many tenths the firing correction should be modified by. This
+            number is negative for reductions and positive for increases; so, -0.3 would indicate a decrease of three
+            tenths."""
+
+        updated_correction = self.target_data.at[target_name, correction] + tenths
+        self.target_data.at[target_name, correction] = max(updated_correction, 0)
+
 
 class Ship:
     """A naval ship. All the data needed to instantiate a new Ship object can be found in the corresponding fleet list
