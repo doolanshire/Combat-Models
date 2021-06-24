@@ -597,21 +597,23 @@ class Ship:
                     gun_battery.target(ship_dictionary, ship.name, target_range, target_bearing,
                                        shell_incidence_angle)
 
-    def apply_correction(self, correction, target, armament_type, tenths):
+    def apply_correction(self, correction, target_name, armament_type, tenths):
         """Apply a correction to the rate of fire (first correction) or accuracy (second correction) of the ship's
         batteries. The method has a check to ensure that neither rate of fire nor accuracy corrections become negative.
         Corrections larger than one (rate of fire or accuracy higher than normal) are still possible.
 
         Arguments:
-            - correction_type (str): 'rate_of_fire' or 'accuracy'. The former corresponds to the 'first correction' in
-            the NWC rules, and the latter to the 'second correction'.
-            - target (str): the name of the target, to look up in the ship dictionary.
+            - correction (str): 'first_correction' or 'second_correction'. In the NWC rules, the former applies to rate
+            of fire, and the latter to accuracy.
+            - target_name (str): the name of the target, to look up in the ship dictionary.
             - armament_type (str): 'primary' or 'secondary'. Decides which batteries will see the correction applied.
             - tenths (float): a fraction indicating how many tenths the firing correction should be modified by. This
             number is negative for reductions and positive for increases; so, -0.3 would indicate a decrease of three
             tenths."""
 
-        pass
+        for gun_battery in self.batteries[armament_type]:
+            updated_correction = gun_battery.target_data.at[target_name, correction] + tenths
+            gun_battery.target_data.at[target_name, correction] = max(updated_correction, 0)
 
     def return_ranging_correction(self, target):
         """Return the ranging correction (reduction) applied to rate of fire if range has not been established or fire
