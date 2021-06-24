@@ -680,10 +680,9 @@ class Ship:
                     # Get the (string) name of each target engaged by the battery.
                     target_name = row['target_name']
                     # Work out the first correction fraction for all outgoing fire by target name.
-                    first_correction = self.status * self.return_ranging_correction(target_name)
+                    first_correction_tenths = self.status * self.return_ranging_correction(target_name)
                     # Add the fraction to the existing first correction number in the battery. Note that most of the
-                    # time the number added will be negative (-0.3 for a 30% decrease in rate of fire, etc).
-                    gun_battery.target_data.at[i, 'first_correction'] += first_correction
+                    gun_battery.apply_correction("first_correction", target_name, first_correction_tenths)
 
 
 class Group:
