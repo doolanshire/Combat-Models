@@ -440,15 +440,14 @@ class Battery:
                 remaining_broadside_mounts -= 1
 
     def apply_correction(self, correction, target_name, tenths):
-        """Apply a correction to the rate of fire (first correction) or accuracy (second correction) of the ship's
-        batteries. The method has a check to ensure that neither rate of fire nor accuracy corrections become negative.
-        Corrections larger than one (rate of fire or accuracy higher than normal) are still possible.
+        """Apply a correction to the rate of fire (first correction) or accuracy (second correction) of the battery. The
+        method has a check to ensure that neither rate of fire nor accuracy corrections become negative. Corrections
+        larger than one (rate of fire or accuracy higher than normal) are still possible.
 
         Arguments:
             - correction (str): 'first_correction' or 'second_correction'. In the NWC rules, the former applies to rate
             of fire, and the latter to accuracy.
             - target_name (str): the name of the target, to look up in the ship dictionary.
-            - armament_type (str): 'primary' or 'secondary'. Decides which batteries will see the correction applied.
             - tenths (float): a fraction indicating how many tenths the firing correction should be modified by. This
             number is negative for reductions and positive for increases; so, -0.3 would indicate a decrease of three
             tenths."""
@@ -473,25 +472,6 @@ class Ship:
             - side (float): the side (belt) armor amidships, in inches.
             - deck (float): the deck armor amidships, in inches.
 
-            *Primary armament*
-            - primary_fire_effect_table (string): the fire effect table used by the primary armament (e.g. "6-in-50").
-            - primary_total (int): the number of turrets in the main gun_battery.
-            - primary_broadside (int): the number of turrets the ship can fire broadside-on.
-            - primary_bow (int): the number of turrets the ship can fire at a target ahead.
-            - primary_stern (int): the number of turrets the ship can fire at a target astern.
-            - primary_mount (int): the number of guns per turret in the ship's primary armament.
-            - primary_end_arc (int): the number of degrees from the bow or stern before the firing arc is considered to
-            be broadside-on.
-
-            *Secondary armament*
-            As above, except with secondary_ as a prefix.
-
-            *Torpedoes*
-            - torpedoes_type (string): the type and caliber of the torpedoes carried by the ship, if any.
-            - torpedoes_mount (string): whether the torpedo tubes are submerged (S) or deck-mounted (D).
-            - torpedoes_total (int): total number of torpedo tubes.
-            - torpedoes_side (int): number of torpedo tubes which can fire on either side.
-
         Attributes:
             *Life*
             - hit_points (float): starts with the same value as the 'life' parameter and gets reduced by damage.
@@ -512,6 +492,18 @@ class Ship:
             - previous_target_data / target_data (DataFrames): tables containing the relevant data of all of the ship's
               targets, used to calculate fire corrections. Upon initialisation these DataFrames are empty, and they are
               populated through the Ship.target() method.
+            - incoming_fire_ship_data (DataFrame): a DataFrame containing information on all the ships firing at (self).
+            Used mostly for over-concentration rules.
+            - incoming_fire_gun_data (DataFrame): a DataFrame containing information of all guns firing at (self) and
+            their calibers. Used mostly to determine whether (self) is under normal fire.
+            - hits_taken (dict): a dictionary of all the hits taken by the ship, with their caliber as key.
+
+            *Armament*
+            - batteries (dict): a dictionary of lists of Battery objects, with keys "primary", "secondary" and
+            "tertiary". Batteries are added to these lists through the Ship.add_battery() method.
+            - torpedoes (list): a list of Torpedoes objects. Each Torpedoes object is a description of torpedo armament
+            (caliber, number of tubes, type of mount, etc). These objects are added through the Ship.add_torpedoes()
+            method.
         """
 
         # General data
@@ -629,8 +621,7 @@ class Ship:
             tenths."""
 
         for gun_battery in self.batteries[armament_type]:
-            updated_correction = gun_battery.target_data.at[target_name, correction] + tenths
-            gun_battery.target_data.at[target_name, correction] = max(updated_correction, 0)
+            gun_battery.apply_correction(correction, target_name, tenths)
 
     def return_ranging_correction(self, target):
         """Return the ranging correction (reduction) applied to rate of fire if range has not been established or fire
