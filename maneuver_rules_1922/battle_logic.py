@@ -637,9 +637,12 @@ class Ship:
             target_group = self.target_data["target_group"][target]
             # Check whether a neighbouring target (in the same formation) had been fired at. If so, apply the standard
             # -30% modifier for shifting fire to an adjacent target.
-            if ((self.previous_target_data['target_group'] == target_group) &
-               self.previous_target_data['fire']).any():
-                print("Fire shifted!")
+            in_formation = self.previous_target_data[(self.previous_target_data["target_group"] == target_group) &
+                                                     (self.previous_target_data["formation"]) &
+                                                     (self.previous_target_data["fire"])]
+
+            if len(in_formation.index) > 0:
+                print("Shifting fire!")
                 return -0.3
 
             # Otherwise, apply the correct reduction depending on the range to the target.
