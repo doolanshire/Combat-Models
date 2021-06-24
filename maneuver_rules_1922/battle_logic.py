@@ -528,14 +528,16 @@ class Ship:
         # Target data
         self.remainder_hits = 0
 
-        self.previous_target_data = pd.DataFrame(columns=["firing_group", "target_group", "target_name", "fire",
-                                                          "armament_type", "target_range", "target_bearing", "evasive",
-                                                          "shell_incidence_angle"])
-        self.target_data = pd.DataFrame(columns=["firing_group", "target_group", "target_name", "fire", "armament_type",
-                                                 "target_range", "target_bearing", "evasive", "shell_incidence_angle"])
+        self.previous_target_data = pd.DataFrame(columns=["firing_group", "target_group", "formation", "target_name",
+                                                          "fire", "armament_type", "target_range", "target_bearing",
+                                                          "evasive", "shell_incidence_angle"])
+        self.target_data = pd.DataFrame(columns=["firing_group", "target_group", "formation", "target_name", "fire",
+                                                 "armament_type", "target_range", "target_bearing", "evasive",
+                                                 "shell_incidence_angle"])
 
         # Incoming fire data
-        self.incoming_fire_ship_data = pd.DataFrame(columns=["ship_name", "group_name", "armament_types", "range"])
+        self.incoming_fire_ship_data = pd.DataFrame(columns=["ship_name", "group_name", "formation",
+                                                             "armament_types", "range"])
         self.incoming_fire_gun_data = pd.DataFrame(columns=["caliber", "guns"])
         self.hits_taken = {}
 
@@ -561,8 +563,8 @@ class Ship:
 
         self.torpedoes.append(torpedoes)
 
-    def target(self, ship_dictionary, firing_group, target_group, target_ships, fire, armament_types, target_range,
-               target_bearing, evasive, shell_incidence_angle):
+    def target(self, ship_dictionary, firing_group, target_group, formation, target_ships, fire, armament_types,
+               target_range, target_bearing, evasive, shell_incidence_angle):
         """Add a target to the ship's target_data DataFrame. Additionally, register the firing ship in the target's
         'taking_fire_from' DataFrame. Eventually this will be done automatically from a battle's fire events CSV files.
 
@@ -585,12 +587,13 @@ class Ship:
             target_list.append(ship_dictionary[ship])
 
         for ship in target_list:
-            self.target_data.loc[ship.name] = (firing_group, target_group, ship.name, fire, armament_types,
+            self.target_data.loc[ship.name] = (firing_group, target_group, formation, ship.name, fire, armament_types,
                                                target_range, target_bearing, evasive, shell_incidence_angle)
 
             # If firing, add the targeting data to the target ship's incoming_fire_ship_data DataFrame.
             if fire:
-                ship.incoming_fire_ship_data.loc[self.name] = self.name, firing_group, armament_types, target_range
+                ship.incoming_fire_ship_data.loc[self.name] = self.name, firing_group, formation, armament_types,\
+                                                              target_range
 
         # PASS THE TARGETING DATA TO THE BATTERIES.
 
@@ -766,13 +769,13 @@ side_a = Side("Australia", side_a_groups)
 side_b = Side("Germany", side_b_groups)
 
 # Fill Emden's target data, firing at Sydney.
-emden.target(ships, "Emden and Dresden", "Brisbane, Sydney and Melbourne", ["Sydney"], True, "primary", 10,
+emden.target(ships, "Emden and Dresden", "Brisbane, Sydney and Melbourne", True, ["Sydney"], True, "primary", 10,
              90, False, 45)
 # Simulate fire in a previous move by copying current target data to the previous target data DataFrame.
 emden.previous_target_data = emden.target_data.copy()
 
 # Additionally, fire at Brisbane in the current move.
-emden.target(ships, "Emden and Dresden", "Brisbane, Sydney and Melbourne", ["Brisbane"], True, "primary", 10,
+emden.target(ships, "Emden and Dresden", "Brisbane, Sydney and Melbourne", True, ["Brisbane"], True, "primary", 10,
              90, False, 45)
 
 # Allocate mounts from primary batteries.
