@@ -564,8 +564,8 @@ class Ship:
 
         self.torpedoes.append(torpedoes)
 
-    def target(self, ship_dictionary, firing_group_name, firing_group_formation, target_group, target_group_formation,
-               target_ships, fire, armament_types, target_range, target_bearing, evasive, shell_incidence_angle):
+    def target(self, ship_dictionary, group_dictionary, firing_group, target_group, target_ships, fire,
+               armament_types, target_range, target_bearing, evasive, shell_incidence_angle):
         """Add a target to the ship's target_data DataFrame. Additionally, register the firing ship in the target's
         'taking_fire_from' DataFrame. Eventually this will be done automatically from a battle's fire events CSV files.
 
@@ -584,17 +584,19 @@ class Ship:
               penetrating.
         """
         target_list = []
-        for ship in target_ships:
-            target_list.append(ship_dictionary[ship])
+        for target_ship in target_ships:
+            target_list.append(ship_dictionary[target_ship])
 
-        for ship in target_list:
-            self.target_data.loc[ship.name] = (firing_group_name, firing_group_formation, target_group,
-                                               target_group_formation, ship.name, fire, armament_types,
-                                               target_range, target_bearing, evasive, shell_incidence_angle)
+        for target_ship in target_list:
+            self.target_data.loc[target_ship.name] = (firing_group, group_dictionary[firing_group].formation,
+                                                      target_group, group_dictionary[target_group].formation,
+                                                      target_ship.name, fire, armament_types, target_range,
+                                                      target_bearing, evasive, shell_incidence_angle)
 
             # If firing, add the targeting data to the target ship's incoming_fire_ship_data DataFrame.
             if fire:
-                ship.incoming_fire_ship_data.loc[self.name] = self.name, firing_group_name, firing_group_formation,\
+                target_ship.incoming_fire_ship_data.loc[self.name] = self.name, firing_group,\
+                                                              group_dictionary[firing_group].formation,\
                                                               armament_types, target_range
 
         # PASS THE TARGETING DATA TO THE BATTERIES.
@@ -604,12 +606,12 @@ class Ship:
         if fire:
             armament_types = [armament_type.strip() for armament_type in armament_types.split(',')]
 
-        # Pass the target information to the batteries belonging to each armament as needed.
-        for armament_type in armament_types:
-            for gun_battery in self.batteries[armament_type]:
-                for ship in target_list:
-                    gun_battery.target(ship_dictionary, ship.name, target_range, target_bearing,
-                                       shell_incidence_angle)
+            # Pass the target information to the batteries belonging to each armament as needed.
+            for armament_type in armament_types:
+                for gun_battery in self.batteries[armament_type]:
+                    for ship in target_list:
+                        gun_battery.target(ship_dictionary, ship.name, target_range, target_bearing,
+                                           shell_incidence_angle)
 
     def apply_correction(self, correction, target_name, armament_type, tenths):
         """Apply a correction to the rate of fire (first correction) or accuracy (second correction) of the ship's
@@ -812,24 +814,24 @@ side_a = Side("Australia", side_a_groups)
 side_b = Side("Germany", side_b_groups)
 
 # Fill Emden's target data, firing at Sydney.
-emden.target(ships, "Emden and Dresden", False, "Brisbane, Sydney and Melbourne", True, ["Sydney"], True, "primary", 10,
-             90, False, 45)
+emden.target(ships, groups, "Emden and Dresden", "Brisbane, Sydney and Melbourne", ["Sydney"], True, "primary", 10, 90,
+             False, 45)
 # Simulate fire in a previous move by copying current target data to the previous target data DataFrame.
 emden.previous_target_data = emden.target_data.copy()
 
 # Additionally, fire at Brisbane in the current move.
-emden.target(ships, "Emden and Dresden", False, "Brisbane, Sydney and Melbourne", True, ["Brisbane"], True, "primary",
-             10, 90, False, 45)
+emden.target(ships, groups, "Emden and Dresden", "Brisbane, Sydney and Melbourne", ["Brisbane"], True, "primary", 10,
+             90, False, 45)
 
 # Fill Dresden's target data, firing at Sydney.
-dresden.target(ships, "Emden and Dresden", False, "Brisbane, Sydney and Melbourne", True, ["Sydney"], True, "primary",
-               10, 90, False, 45)
+dresden.target(ships, groups, "Emden and Dresden", "Brisbane, Sydney and Melbourne", ["Sydney"], True, "primary", 10,
+               90, False, 45)
 # Simulate fire in a previous move by copying current target data to the previous target data DataFrame.
 dresden.previous_target_data = dresden.target_data.copy()
 
 # Additionally, fire at Brisbane in the current move.
-dresden.target(ships, "Emden and Dresden", False, "Brisbane, Sydney and Melbourne", True, ["Brisbane"], True, "primary",
-               10, 90, False, 45)
+dresden.target(ships, groups, "Emden and Dresden", "Brisbane, Sydney and Melbourne", ["Brisbane"], True, "primary", 10,
+               90, False, 45)
 
 # Allocate mounts from primary batteries.
 for battery in emden.batteries["primary"]:
