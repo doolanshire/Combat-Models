@@ -798,8 +798,9 @@ side_a_group_ships = {"Sydney": sydney, "Brisbane": brisbane, "Melbourne": melbo
 side_b_group_ships = {"Emden": emden, "Dresden": dresden}
 
 # Test groups
-side_a_groups = {"Brisbane, Sydney and Melbourne": Group("Brisbane, Sydney and Melbourne", side_a_group_ships, True)}
-side_b_groups = {"Emden and Dresden": Group("Emden and Dresden", side_b_group_ships, False)}
+side_a_groups = {"Brisbane, Sydney and Melbourne": Group("Brisbane, Sydney and Melbourne", side_a_group_ships, "light",
+                                                         True)}
+side_b_groups = {"Emden and Dresden": Group("Emden and Dresden", side_b_group_ships, "light", True)}
 
 # Global group dictionary
 groups = {}
