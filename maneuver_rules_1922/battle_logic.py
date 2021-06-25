@@ -814,23 +814,23 @@ side_a = Side("Australia", side_a_groups)
 side_b = Side("Germany", side_b_groups)
 
 # Fill Emden's target data, firing at Sydney.
-emden.target(ships, groups, "Emden and Dresden", "Brisbane, Sydney and Melbourne", ["Sydney"], True, "primary", 10, 90,
+emden.target(ships, groups, "Emden and Dresden", "Brisbane, Sydney and Melbourne", ["Sydney"], True, "primary", 14, 90,
              False, 45)
 # Simulate fire in a previous move by copying current target data to the previous target data DataFrame.
 emden.previous_target_data = emden.target_data.copy()
 
 # Additionally, fire at Brisbane in the current move.
-emden.target(ships, groups, "Emden and Dresden", "Brisbane, Sydney and Melbourne", ["Brisbane"], True, "primary", 10,
+emden.target(ships, groups, "Emden and Dresden", "Brisbane, Sydney and Melbourne", ["Brisbane"], True, "primary", 14,
              90, False, 45)
 
-# Fill Dresden's target data, firing at Sydney.
-dresden.target(ships, groups, "Emden and Dresden", "Brisbane, Sydney and Melbourne", ["Sydney"], True, "primary", 10,
+# Fill Dresden's target data. Sydney is targeted in the event but not fired at.
+dresden.target(ships, groups, "Emden and Dresden", "Brisbane, Sydney and Melbourne", ["Sydney"], False, "primary", 14,
                90, False, 45)
-# Simulate fire in a previous move by copying current target data to the previous target data DataFrame.
+# Simulate targeting in a previous move by copying current target data to the previous target data DataFrame.
 dresden.previous_target_data = dresden.target_data.copy()
 
-# Additionally, fire at Brisbane in the current move.
-dresden.target(ships, groups, "Emden and Dresden", "Brisbane, Sydney and Melbourne", ["Brisbane"], True, "primary", 10,
+# Target Sydney again in the current move, but firing this time around.
+dresden.target(ships, groups, "Emden and Dresden", "Brisbane, Sydney and Melbourne", ["Sydney"], True, "primary", 14,
                90, False, 45)
 
 # Allocate mounts from primary batteries.
@@ -842,12 +842,17 @@ for battery in dresden.batteries["primary"]:
 
 # Print the targeting dataframes for both Emden and its two primary batteries.
 with pd.option_context('display.max_rows', 5, 'display.max_columns', None, 'display.width', None):
-    print("Previous target data")
+    print("Previous target data (Emden)")
     print(emden.previous_target_data)
     print("")
-    print("Current target data")
+    print("Current target data (Emden)")
     print(emden.target_data)
     print("")
+    print("Previous target data (Dresden)")
+    print(dresden.previous_target_data)
+    print("")
+    print("Current target data (Dresden)")
+    print(dresden.target_data)
     print("Brisbane incoming fire data")
     print(brisbane.incoming_fire_ship_data)
     print("")
