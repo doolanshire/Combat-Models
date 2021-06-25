@@ -738,9 +738,9 @@ class Group:
 
 class Side:
     """A temporary implementation of the Side class, made only to enable looking up a certain group for targeting."""
-    def __init__(self, name, groups):
+    def __init__(self, name, side_groups):
         self.name = name
-        self.groups = groups
+        self.groups = side_groups
 
 
 # TEST SHIPS (AUSTRALIA)
@@ -790,7 +790,7 @@ emden.current_speed = dresden.current_speed = 15
 emden.initial_course = dresden.initial_course = 80
 emden.current_course = dresden.current_course = 90
 
-# Test ship dictionary
+# Global ship dictionary
 ships = {"Sydney": sydney, "Melbourne": melbourne, "Brisbane": brisbane, "Emden": emden, "Dresden": dresden}
 
 # Test group ship dictionaries
@@ -800,6 +800,11 @@ side_b_group_ships = {"Emden": emden, "Dresden": dresden}
 # Test groups
 side_a_groups = {"Brisbane, Sydney and Melbourne": Group("Brisbane, Sydney and Melbourne", side_a_group_ships, True)}
 side_b_groups = {"Emden and Dresden": Group("Emden and Dresden", side_b_group_ships, False)}
+
+# Global group dictionary
+groups = {}
+groups.update(side_a_groups)
+groups.update(side_b_groups)
 
 # Test sides
 side_a = Side("Australia", side_a_groups)
