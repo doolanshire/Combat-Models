@@ -14,12 +14,13 @@ array, and later plotted using MatPlotLib.
 import numpy
 
 import matplotlib.pyplot as plot
+import seaborn as sns
 
 # The length of the time step will not alter the end result.
 # Use only to determine the resolution of the graph.
 
 timeStart = 0.0
-timeEnd = 5.0
+timeEnd = 6.0
 timeStep = 0.01
 
 steps = int((timeEnd - timeStart) / timeStep)
@@ -33,11 +34,11 @@ time = numpy.zeros(steps)
 # Iwo Jima sample values: blue (US) = 54000; red (Japanese) = 21500;
 # blueLethality = 0.0106; redLethality = 0.0544
 
-blue[0] = 42
-red[0] = 30
+blue[0] = 1000
+red[0] = 500
 
-blueLethality = 0.2
-redLethality = 0.2
+blueLethality = 0.1
+redLethality = 0.1
 
 time[0] = timeStart
 
@@ -52,8 +53,9 @@ blueRemaining = int(blue[len(blue)-1])
 redRemaining = int(red[len(red)-1])
 
 # Plot code.
-    
+sns.set_theme(font='Times New Roman')
 plot.figure()
+plot.title("Lanchester Square Law", fontweight='bold', fontsize=16)
 plot.step(time, blue, '-b', where = 'post', label = 'Blue army')
 plot.step(time, red, '-r', where = 'post', label = 'Red army')
 plot.ylabel('Strength')
