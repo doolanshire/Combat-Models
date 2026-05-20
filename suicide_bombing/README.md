@@ -14,7 +14,7 @@ The purpose of the model is to demonstrate the phenomenon known as _crowd blocki
 
 The analytical model by Kress uses a circular arena and assumes the targets are distributed in concentric rings around the centre.
 
-![Example of an arena as seen in Kress' paper](https://github.com/doolanshire/Combat-Models/blob/master/suicidebombing/kressfig.png)
+![Example of an arena as seen in Kress' paper](https://github.com/doolanshire/Combat-Models/blob/master/suicide_bombing/sample.png)
 
 This simulation assumes a rectangular arena instead, in which targets are placed freely. The user specifies:
 
